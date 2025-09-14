@@ -24,7 +24,7 @@ FAKE_RECORDS = [
         'artist': 'Miles Davis',
         'price': 28.00,
         'stock_quantity': 0, 
-        'cover_image_url': 'https://upload.wikimedia.org/wikipedia/en/9/9c/MilesDavisKindofBlue.jpg'
+        'cover_image_url': 'https://upload.wikimedia.org/wikipedia/ru/c/c8/Miles_Davis_-_Kind_Of_Blue.jpeg'
     },
 ]
 

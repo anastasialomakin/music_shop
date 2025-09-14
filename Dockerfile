@@ -6,6 +6,7 @@ COPY requirements.txt requirements.txt
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./app /app
+COPY ./app /app/
+COPY main.py .
 
-CMD ["flask", "--app", "app", "run", "--host=0.0.0.0"]
+CMD ["flask", "--app", "main", "run", "--host=0.0.0.0"]
