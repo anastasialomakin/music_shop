@@ -1,0 +1,22 @@
+body { 
+    font-family: sans-serif; }
+
+.catalog-grid { 
+    display: grid; 
+    grid-template-columns: repeat(5, 1fr); 
+    gap: 20px; }
+
+.record-card { 
+    border: 1px solid #ccc; 
+    padding: 10px; 
+    text-align: center; }
+
+.record-card img { 
+    max-width: 100%; 
+    height: auto; }
+
+.status-in-stock { 
+    color: green; }
+
+.status-out-of-stock { 
+    color: red; }
