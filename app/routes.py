@@ -4,7 +4,7 @@ from app import db
 from functools import wraps
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import Record, Ensemble, Customer, Composition, Order
-from app.forms import EnsembleForm, LoginForm, EditProfileForm, RecordForm
+from app.forms import EnsembleForm, LoginForm, EditProfileForm, RecordForm, AdminEditUserForm
 
 @app.route('/')
 @app.route('/index')
@@ -117,7 +117,7 @@ def remove_from_cart(record_id):
         flash('Товар удален из корзины.')
     return redirect(url_for('cart'))
 
-# --- РАЗДЕЛ ПОЛЬЗОВАТЕЛЯ ---
+# покупатель
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -168,7 +168,7 @@ def manufacturer_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# --- РАЗДЕЛ ЛЕЙБЛА ---
+# лейбл
 
 @app.route('/my-records')
 @login_required
@@ -243,3 +243,71 @@ def edit_record(record_id):
 @manufacturer_required
 def sales_report():
     return render_template('sales_report.html', title='Отчет о продажах')
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            abort(403) 
+        return f(*args, **kwargs)
+    return decorated_function
+
+# админ
+@app.route('/admin')
+@login_required
+@admin_required
+def admin_dashboard():
+    return render_template('admin_dashboard.html', title='Админ-панель')
+
+@app.route('/admin/users')
+@login_required
+@admin_required
+def admin_users():
+    users = Customer.query.all()
+    return render_template('admin_users.html', title='Управление пользователями', users=users)
+
+@app.route('/admin/users/edit/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_edit_user(user_id):
+    user = Customer.query.get_or_404(user_id)
+    form = AdminEditUserForm()
+    if form.validate_on_submit():
+        user.username = form.username.data
+        user.role = form.role.data
+        if form.password.data:
+            user.set_password(form.password.data)
+        db.session.commit()
+        flash('Пользователь обновлен.')
+        return redirect(url_for('admin_users'))
+    elif request.method == 'GET':
+        form.username.data = user.username
+        form.role.data = user.role
+    return render_template('admin_edit_user.html', title='Редактировать пользователя', form=form, user=user)
+
+@app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_user(user_id):
+    if user_id == current_user.id:
+        flash('Вы не можете удалить свой собственный аккаунт.')
+        return redirect(url_for('admin_users'))
+    user = Customer.query.get_or_404(user_id)
+    db.session.delete(user)
+    db.session.commit()
+    flash('Пользователь удален.')
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/records')
+@login_required
+@admin_required
+def admin_records():
+    records = Record.query.all()
+    return render_template('admin_records.html', title='Управление пластинками', records=records)
+
+@app.route('/admin/ensembles')
+@login_required
+@admin_required
+def admin_ensembles():
+    ensembles = Ensemble.query.all()
+    return render_template('admin_ensembles.html', title='Управление ансамблями', ensembles=ensembles)

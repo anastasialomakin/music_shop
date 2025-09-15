@@ -1,0 +1,14 @@
+{% extends "admin_base.html" %}
+{% block admin_content %}
+    <h3>Редактирование пользователя: {{ user.username }}</h3>
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <p>{{ form.username.label }}<br>{{ form.username(size=32) }}</p>
+        <p>{{ form.role.label }}<br>{{ form.role() }}</p>
+        <hr>
+        <p><i>Оставьте поля пароля пустыми, чтобы не менять его.</i></p>
+        <p>{{ form.password.label }}<br>{{ form.password(size=32) }}</p>
+        <p>{{ form.password2.label }}<br>{{ form.password2(size=32) }}</p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

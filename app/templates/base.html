@@ -17,6 +17,10 @@
                 <a href="{{ url_for('ensembles_list') }}">Ансамбли</a>
                 
                 {% if current_user.is_authenticated %}
+                    {% if current_user.role == 'admin' %}
+                        <a href="{{ url_for('admin_dashboard') }}">Админ-панель</a>
+                    {% endif %}
+                    
                     <a href="{{ url_for('profile') }}" title="Профиль"><i class="bi bi-person-circle" style="font-size: 1.5rem;"></i></a>
                     {% if current_user.role == 'user' %}
                         <a href="{{ url_for('cart') }}" title="Корзина"><i class="bi bi-cart" style="font-size: 1.5rem;"></i></a>

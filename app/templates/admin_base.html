@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Админ-панель</h1>
+    </div>
+    <nav style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
+        <a href="{{ url_for('admin_dashboard') }}" style="margin-right: 15px;">Главная</a>
+        <a href="{{ url_for('admin_users') }}" style="margin-right: 15px;">Пользователи</a>
+        <a href="{{ url_for('admin_records') }}" style="margin-right: 15px;">Пластинки</a>
+        <a href="{{ url_for('admin_ensembles') }}" style="margin-right: 15px;">Ансамбли</a>
+    </nav>
+    
+    {% block admin_content %}{% endblock %}
+{% endblock %}

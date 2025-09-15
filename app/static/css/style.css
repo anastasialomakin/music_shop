@@ -257,3 +257,51 @@ footer {
     background-color: #c82333;
     text-decoration: none;
 }
+
+/* --- админ-панель --- */
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse; 
+    margin-top: 20px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px 15px; 
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1); 
+}
+
+.admin-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.admin-table tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table .actions {
+    text-align: center; 
+}
+
+.admin-table .actions a,
+.admin-table .actions button {
+    margin: 0 8px; 
+    color: #333;
+    font-size: 1.2rem; 
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.admin-table .actions a:hover {
+    color: #007bff; 
+}
+
+.admin-table .actions button {
+    color: #dc3545;
+}
+.admin-table .actions button:hover {
+    color: #a01c29; 
+}

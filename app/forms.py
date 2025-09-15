@@ -24,7 +24,6 @@ class EditProfileForm(FlaskForm):
     submit = SubmitField('Сохранить изменения')
 
     def validate_username(self, username):
-        # Проверяем, что если имя пользователя изменилось, то новое имя не занято
         if username.data != current_user.username:
             user = Customer.query.filter_by(username=username.data).first()
             if user:
@@ -37,4 +36,8 @@ class RecordForm(FlaskForm):
     retail_price = DecimalField('Розничная цена', validators=[DataRequired()])
     stock_quantity = IntegerField('Количество на складе', validators=[DataRequired()])
     description = TextAreaField('Описание')
+    submit = SubmitField('Сохранить')
+
+class AdminEditUserForm(EditProfileForm):
+    role = SelectField('Роль', choices=[('user', 'Покупатель'), ('manufacturer', 'Производитель'), ('admin', 'Администратор')])
     submit = SubmitField('Сохранить')
