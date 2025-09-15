@@ -14,15 +14,16 @@ services:
       - db
 
   db:
-    image: postgres:15-alpine
+    image: mysql:8.0
     volumes:
-      - postgres_data:/var/lib/postgresql/data/ 
+      - mysql_data:/var/lib/mysql 
     environment:
-      - POSTGRES_USER=myuser
-      - POSTGRES_PASSWORD=mypassword
-      - POSTGRES_DB=music_store_db
+      - MYSQL_ROOT_PASSWORD: rootpassword # Пароль суперпользователя
+      - MYSQL_DATABASE: music_store_db   # Название базы данных
+      - MYSQL_USER: myuser               # Имя пользователя
+      - MYSQL_PASSWORD: mypassword       # Пароль пользователя
     ports:
-      - "5432:5432"
+      - "3306:3306"
 
 volumes:
-  postgres_data:
+  mysql_data:
