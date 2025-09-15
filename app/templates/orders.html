@@ -1,7 +1,7 @@
-{% extends "base.html" %}
+{% extends "profile_base.html" %}
 
-{% block content %}
-    <h1>Мои заказы</h1>
+{% block profile_content %}
+    <h3>Мои заказы</h3>
     {% if not orders %}
         <p>У вас еще нет заказов.</p>
     {% else %}

@@ -1,9 +1,10 @@
 from app import app
-from flask import render_template, flash, redirect, url_for, session, request
+from flask import render_template, flash, redirect, url_for, session, request, abort
 from app import db
+from functools import wraps
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import Record, Ensemble, Customer, Composition, Order
-from app.forms import EnsembleForm, LoginForm, ProfileForm
+from app.forms import EnsembleForm, LoginForm, EditProfileForm, RecordForm
 
 @app.route('/')
 @app.route('/index')
@@ -121,16 +122,26 @@ def remove_from_cart(record_id):
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    form = ProfileForm()
+    form = EditProfileForm()
     if form.validate_on_submit():
-        current_user.shipping_address = form.shipping_address.data
+        current_user.username = form.username.data
+  
+        if current_user.role == 'user':
+            current_user.shipping_address = form.shipping_address.data
+
+        if form.password.data:
+            current_user.set_password(form.password.data)
+            
         db.session.commit()
         flash('Ваш профиль был обновлен.')
         return redirect(url_for('profile'))
+        
     elif request.method == 'GET':
         form.username.data = current_user.username
-        form.shipping_address.data = current_user.shipping_address
-    return render_template('profile.html', title='Мой профиль', form=form)
+        if current_user.role == 'user':
+            form.shipping_address.data = current_user.shipping_address
+            
+    return render_template('profile.html', title='Личный кабинет', form=form)
 
 @app.route('/orders')
 @login_required
@@ -148,3 +159,87 @@ def orders_list():
 def checkout():
     # ЗАГЛУШКА: здесь будет логика оформления заказа
     return render_template('checkout.html', title='Оформление заказа')
+
+def manufacturer_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'manufacturer':
+            abort(403) 
+        return f(*args, **kwargs)
+    return decorated_function
+
+# --- РАЗДЕЛ ЛЕЙБЛА ---
+
+@app.route('/my-records')
+@login_required
+@manufacturer_required
+def my_records():
+    records = Record.query.filter_by(manufacturer_id=current_user.manufacturer.id).all()
+    return render_template('my_records.html', title='Мои пластинки', records=records)
+
+@app.route('/my-records/add', methods=['GET', 'POST'])
+@login_required
+@manufacturer_required
+def add_record():
+    form = RecordForm()
+    form.ensemble.choices = [(e.id, e.name) for e in Ensemble.query.order_by('name').all()]
+
+    if form.validate_on_submit():
+        ensemble = Ensemble.query.get(form.ensemble.data)
+        new_composition = Composition(title=form.title.data, ensemble=ensemble)
+        
+        new_record = Record(
+            title=form.title.data,
+            release_year=form.release_year.data,
+            retail_price=form.retail_price.data,
+            stock_quantity=form.stock_quantity.data,
+            description=form.description.data,
+            manufacturer_id=current_user.manufacturer.id
+        )
+        new_record.compositions.append(new_composition)
+        db.session.add(new_record)
+        db.session.commit()
+        flash('Пластинка успешно добавлена!')
+        return redirect(url_for('my_records'))
+        
+    return render_template('record_form.html', title='Добавить пластинку', form=form)
+
+@app.route('/my-records/edit/<int:record_id>', methods=['GET', 'POST'])
+@login_required
+@manufacturer_required
+def edit_record(record_id):
+    record = Record.query.get_or_404(record_id)
+    if record.manufacturer_id != current_user.manufacturer.id:
+        abort(403)
+        
+    form = RecordForm(obj=record)
+    form.ensemble.choices = [(e.id, e.name) for e in Ensemble.query.order_by('name').all()]
+    
+    if form.validate_on_submit():
+        record.title = form.title.data
+        record.release_year = form.release_year.data
+        record.retail_price = form.retail_price.data
+        record.stock_quantity = form.stock_quantity.data
+        record.description = form.description.data
+        ensemble = Ensemble.query.get(form.ensemble.data)
+        if record.compositions:
+            record.compositions[0].ensemble = ensemble
+        else: 
+            new_composition = Composition(title=record.title, ensemble=ensemble)
+            record.compositions.append(new_composition)
+
+        db.session.commit()
+        flash('Данные о пластинке обновлены.')
+        return redirect(url_for('my_records'))
+        
+    elif request.method == 'GET':
+        if record.compositions:
+            form.ensemble.data = record.compositions[0].ensemble_id
+
+    return render_template('record_form.html', title='Редактировать пластинку', form=form)
+
+@app.route('/sales-report')
+@login_required
+@manufacturer_required
+def sales_report():
+    return render_template('sales_report.html', title='Отчет о продажах')

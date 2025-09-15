@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Личный кабинет</h1>
+    <div class="profile-container">
+        <aside class="profile-sidebar">
+            <!-- Панель для Покупателя -->
+            {% if current_user.role == 'user' %}
+                <a href="{{ url_for('profile') }}" class="{% if request.endpoint == 'profile' %}active{% endif %}">Персональные данные</a>
+                <a href="{{ url_for('cart') }}" class="{% if request.endpoint == 'cart' %}active{% endif %}">Корзина</a>
+                <a href="{{ url_for('orders_list') }}" class="{% if request.endpoint == 'orders_list' %}active{% endif %}">Мои заказы</a>
+            
+            <!-- Панель для Лейбла -->
+            {% elif current_user.role == 'manufacturer' %}
+                <a href="{{ url_for('profile') }}" class="{% if request.endpoint == 'profile' %}active{% endif %}">Данные компании</a>
+                <a href="{{ url_for('my_records') }}" class="{% if 'my_records' in request.endpoint %}active{% endif %}">Мои пластинки</a>
+                <a href="{{ url_for('sales_report') }}" class="{% if request.endpoint == 'sales_report' %}active{% endif %}">Отчет о продажах</a>
+            {% endif %}
+        </aside>
+
+        <div class="profile-content">
+            <!-- Этот блок будет заменен содержимым дочерних шаблонов -->
+            {% block profile_content %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}

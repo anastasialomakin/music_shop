@@ -1,0 +1,14 @@
+{% extends "profile_base.html" %}
+{% block profile_content %}
+    <h3>{{ title }}</h3>
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <p>{{ form.title.label }}<br>{{ form.title(size=64) }}</p>
+        <p>{{ form.ensemble.label }}<br>{{ form.ensemble() }}</p>
+        <p>{{ form.release_year.label }}<br>{{ form.release_year(size=10) }}</p>
+        <p>{{ form.retail_price.label }}<br>{{ form.retail_price(size=10) }}</p>
+        <p>{{ form.stock_quantity.label }}<br>{{ form.stock_quantity(size=10) }}</p>
+        <p>{{ form.description.label }}<br>{{ form.description(cols=60, rows=5) }}</p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

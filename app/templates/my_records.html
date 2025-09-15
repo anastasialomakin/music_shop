@@ -1,0 +1,16 @@
+{% extends "profile_base.html" %}
+{% block profile_content %}
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Мои пластинки</h3>
+        <a href="{{ url_for('add_record') }}" style="background: #007bff; color: white; padding: 8px 12px; border-radius: 5px;">Добавить новую</a>
+    </div>
+    <hr>
+    {% for record in records %}
+    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+        <span>{{ record.title }} ({{ record.compositions[0].ensemble.name if record.compositions else '' }})</span>
+        <a href="{{ url_for('edit_record', record_id=record.id) }}">Редактировать</a>
+    </div>
+    {% else %}
+    <p>Вы еще не добавили ни одной пластинки.</p>
+    {% endfor %}
+{% endblock %}

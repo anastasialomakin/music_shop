@@ -46,8 +46,7 @@
                             {% endif %}
                             <p><strong>{{ record.retail_price }}$</strong></p>
                         </a>
-                        
-                        <!-- ***** ИСПРАВЛЕННЫЙ БЛОК НАЧИНАЕТСЯ ЗДЕСЬ ***** -->
+            
                         {% if record.stock_quantity > 0 %}
                             <p class="status-in-stock" style="color: green;">В наличии</p>
                             {% if current_user.is_authenticated and current_user.role == 'user' %}
@@ -58,8 +57,6 @@
                         {% else %}
                             <p class="status-out-of-stock" style="color: red;">Нет в наличии</p>
                         {% endif %}
-                        <!-- ***** ИСПРАВЛЕННЫЙ БЛОК ЗАКАНЧИВАЕТСЯ ЗДЕСЬ ***** -->
-
                     </div>
                 {% else %}
                     <p>В каталоге пока нет пластинок.</p>

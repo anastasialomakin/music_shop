@@ -83,6 +83,9 @@ class Manufacturer(db.Model):
     name = db.Column(db.String(150), nullable=False)
     address = db.Column(db.String(255))
 
+    user_id = db.Column(db.Integer, db.ForeignKey('customers.id'))
+    user = db.relationship('Customer', backref=db.backref('manufacturer', uselist=False))
+
     records = db.relationship('Record', back_populates='manufacturer')
     
     def __repr__(self):

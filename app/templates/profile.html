@@ -1,17 +1,39 @@
-{% extends "base.html" %}
+{% extends "profile_base.html" %}
 
-{% block content %}
-    <h1>Мой профиль</h1>
+{% block profile_content %}
+    <h3>Персональные данные</h3>
     <form action="" method="post">
         {{ form.hidden_tag() }}
         <p>
             {{ form.username.label }}<br>
             {{ form.username(size=32) }}
+            {% for error in form.username.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
         </p>
+
+        {% if current_user.role == 'user' %}
         <p>
             {{ form.shipping_address.label }}<br>
             {{ form.shipping_address(cols=50, rows=4) }}
         </p>
+        {% endif %}
+
+        <hr>
+        <p><i>Оставьте поля ниже пустыми, если не хотите менять пароль.</i></p>
+        <p>
+            {{ form.password.label }}<br>
+            {{ form.password(size=32) }}
+        </p>
+        <p>
+            {{ form.password2.label }}<br>
+            {{ form.password2(size=32) }}
+            {% for error in form.password2.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
         <p>{{ form.submit() }}</p>
     </form>
+    <hr>
+    <a href="{{ url_for('logout') }}" class="logout-button">Выйти из аккаунта</a>
 {% endblock %}
