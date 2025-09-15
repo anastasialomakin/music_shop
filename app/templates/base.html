@@ -3,26 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% if title %}
-    <title>{{ title }} - Музыкальный Магазин</title>
-    {% else %}
-    <title>Музыкальный Магазин</title>
-    {% endif %}
+    <title>{% if title %}{{ title }} - {% endif %}Музыкальный Магазин</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="/app/static/css/style.css">
 </head>
 <body>
     <header>
-        <h1><a href="{{ url_for('index') }}">Music Store</a></h1>
-        <nav>
-            <!-- навигация в шапке (потом) -->
-        </nav>
+        <div class="container">
+            <h1><a href="{{ url_for('index') }}">Музыкальный Магазин</a></h1>
+            <nav>
+                <a href="{{ url_for('about') }}">О нас</a>
+                <a href="{{ url_for('index') }}">Каталог</a>
+                <a href="{{ url_for('ensembles_list') }}">Ансамбли</a>
+                {% if current_user.is_authenticated %}
+                    <span>Привет, {{ current_user.username }}!</span>
+                    <a href="#">Профиль</a>
+                    <a href="{{ url_for('logout') }}">Выход</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}">Вход</a>
+                {% endif %}
+            </nav>
+        </div>
     </header>
+
     <main>
-        {% block content %}{% endblock %}
+        <div class="container">
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+            {% endwith %}
+            
+            {% block content %}{% endblock %}
+        </div>
     </main>
+
     <footer>
-        <p>&copy; 2025 Музыкальный Магазин, гр. 231-3212</p>
+        <div class="container">
+            <p>&copy; 2025 Музыкальный Магазин, гр. 231-3212</p>
+        </div>
+
     </footer>
 </body>
 </html>

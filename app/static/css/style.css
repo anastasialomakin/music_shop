@@ -1,22 +1,192 @@
-body { 
-    font-family: sans-serif; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
 
-.catalog-grid { 
-    display: grid; 
-    grid-template-columns: repeat(5, 1fr); 
-    gap: 20px; }
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
-.record-card { 
-    border: 1px solid #ccc; 
-    padding: 10px; 
-    text-align: center; }
+a {
+    color: #007bff;
+    text-decoration: none;
+}
 
-.record-card img { 
-    max-width: 100%; 
-    height: auto; }
+a:hover {
+    text-decoration: underline;
+}
 
-.status-in-stock { 
-    color: green; }
+/* --- шапка --- */
+header {
+    background-color: #fff;
+    border-bottom: 1px solid #ddd;
+    padding: 10px 0;
+}
 
-.status-out-of-stock { 
-    color: red; }
+header .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+header h1 a {
+    color: #333;
+    text-decoration: none;
+}
+
+nav a, nav span {
+    margin-left: 15px;
+    font-size: 1.1em;
+}
+
+/* --- мейн --- */
+main {
+    flex: 1; 
+}
+
+/* --- футер --- */
+footer {
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    margin-top: auto;
+}
+
+
+/* --- каталог --- */
+.catalog-container {
+    display: flex;
+    gap: 20px;
+}
+
+.catalog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.catalog-main {
+    flex: 1;
+}
+
+.record-card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    text-align: center;
+    transition: box-shadow 0.3s ease;
+}
+
+.record-card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.record-card img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.record-card h3 {
+    font-size: 1.1em;
+    margin: 10px 0;
+}
+
+/* боковая панель с фильтрами */
+.filters-sidebar {
+    flex: 0 0 250px; 
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    height: fit-content; 
+}
+
+.filters-sidebar h4 {
+    margin-top: 0;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.filters-sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.filters-sidebar li {
+    margin-bottom: 10px;
+}
+
+/* панель поиска и сортировки */
+.search-sort-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: #fff;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.search-sort-bar input[type="search"] {
+    width: 60%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.search-sort-bar select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* --- страница пластинки --- */
+.record-detail {
+    display: flex;
+    gap: 30px;
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.record-detail-image {
+    flex: 1;
+    max-width: 400px;
+}
+
+.record-detail-image img {
+    width: 100%;
+    height: auto;
+    border-radius: 5px;
+}
+
+.record-detail-info {
+    flex: 2;
+}
+
+/* --- флэш-сообщения --- */
+.flashes {
+    list-style: none;
+    padding: 15px;
+    margin: 0 0 20px 0;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 5px;
+}

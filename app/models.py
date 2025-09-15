@@ -2,6 +2,8 @@
 
 from app import db
 import datetime
+from flask_login import UserMixin
+from werkzeug.security import generate_password_hash, check_password_hash 
 
 # пластинка <-> композиция
 record_compositions = db.Table('record_compositions',
@@ -31,6 +33,7 @@ class Record(db.Model):
 
     compositions = db.relationship('Composition', secondary=record_compositions, back_populates='records')
     order_items = db.relationship('OrderItem', back_populates='record')
+    manufacturer = db.relationship('Manufacturer', back_populates='records')
 
     def __repr__(self):
         return f'<Record {self.title}>'
@@ -45,6 +48,8 @@ class Composition(db.Model):
     ensemble_id = db.Column(db.Integer, db.ForeignKey('ensembles.id'))
 
     records = db.relationship('Record', secondary=record_compositions, back_populates='compositions')
+
+    ensemble = db.relationship('Ensemble', back_populates='compositions')
 
     def __repr__(self):
         return f'<Composition {self.title}>'
@@ -83,14 +88,22 @@ class Manufacturer(db.Model):
     def __repr__(self):
         return f'<Manufacturer {self.name}>'
 
-class Customer(db.Model):
+class Customer(UserMixin, db.Model):
     __tablename__ = 'customers'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     shipping_address = db.Column(db.Text)
 
+    role = db.Column(db.String(20), nullable=False, default='user')
+
     orders = db.relationship('Order', back_populates='customer')
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
         return f'<Customer {self.username}>'

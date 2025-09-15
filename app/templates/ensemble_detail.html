@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="ensemble-header" style="background: #fff; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+        <h1>{{ ensemble.name or 'Название ансамбля' }}</h1>
+        <p>{{ ensemble.description or 'Подробное описание ансамбля...' }}</p>
+        <!-- TODO: Выводить состав ансамбля -->
+    </div>
+
+    <h2>Пластинки ансамбля в нашем магазине</h2>
+    <div class="catalog-grid">
+        {% for record in records %}
+            <a href="{{ url_for('record_detail', id=record.id) }}" style="text-decoration: none; color: inherit;">
+                <div class="record-card">
+                    <img src="{{ record.cover_image_url or 'https://via.placeholder.com/200' }}" alt="Обложка {{ record.title }}">
+                    <h3>{{ record.title }}</h3>
+                    <p><strong>{{ record.retail_price }}$</strong></p>
+                </div>
+            </a>
+        {% else %}
+            <p>У этого ансамбля пока нет пластинок в магазине.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

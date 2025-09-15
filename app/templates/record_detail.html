@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="record-detail">
+        <div class="record-detail-image">
+            <img src="{{ record.cover_image_url or 'https://via.placeholder.com/400' }}" alt="Обложка {{ record.title }}">
+        </div>
+        <div class="record-detail-info">
+            <h1>{{ record.title }}</h1>
+            <h2>{{ record.ensemble_name or 'Неизвестный исполнитель' }}</h2>
+            
+            <p><strong>Год выпуска:</strong> {{ record.release_year or 'Н/Д' }}</p>
+            <p><strong>Формат:</strong> {{ record.format or 'LP' }}</p>
+            <p><strong>Лейбл:</strong> {{ record.manufacturer_name or 'Неизвестен' }}</p>
+            
+            <h3>Цена: {{ record.retail_price }}$</h3>
+
+            <!-- TODO: Сделать кнопку динамической -->
+            <button style="padding: 10px 20px; font-size: 1.2em; cursor: pointer;">Добавить в корзину</button>
+            
+            <div class="description" style="margin-top: 20px;">
+                <h3>Описание</h3>
+                <p>{{ record.description or 'Описание отсутствует.' }}</p>
+            </div>
+            
+            <!-- TODO: Выводить реальный треклист -->
+            <div class="tracklist" style="margin-top: 20px;">
+                <h3>Треклист</h3>
+                <ul>
+                    <li>Трек 1</li>
+                    <li>Трек 2</li>
+                    <li>Трек 3</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}

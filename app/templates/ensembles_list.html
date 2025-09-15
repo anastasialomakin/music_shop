@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h2>Все ансамбли</h2>
+
+    <!-- TODO: Добавить реальный поиск и сортировку -->
+    <div class="search-sort-bar">
+        <input type="search" placeholder="Поиск по названию ансамбля...">
+    </div>
+
+    <!-- TODO: Заменить на реальный список из БД -->
+    <div class="ensembles-list">
+        {% for ensemble in ensembles %}
+            <div class="ensemble-item" style="background: #fff; padding: 15px; border-radius: 5px; margin-bottom: 10px;">
+                <h3><a href="{{ url_for('ensemble_detail', id=ensemble.id) }}">{{ ensemble.name }}</a></h3>
+            </div>
+        {% else %}
+            <p>В базе пока нет ансамблей.</p>
+        {% endfor %}
+    </div>
+
+    <!-- TODO: Добавить реальную пагинацию -->
+    <div class="pagination" style="margin-top: 20px; text-align: center;">
+        <p>Здесь будет переключение страниц: 1, 2, 3...</p>
+    </div>
+{% endblock %}
