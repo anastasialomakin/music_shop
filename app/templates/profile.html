@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Мой профиль</h1>
+    <form action="" method="post">
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.username.label }}<br>
+            {{ form.username(size=32) }}
+        </p>
+        <p>
+            {{ form.shipping_address.label }}<br>
+            {{ form.shipping_address(cols=50, rows=4) }}
+        </p>
+        <p>{{ form.submit() }}</p>
+    </form>
+{% endblock %}

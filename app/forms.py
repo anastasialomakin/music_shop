@@ -12,3 +12,8 @@ class LoginForm(FlaskForm):
     password = PasswordField('Пароль', validators=[DataRequired()])
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')
+
+class ProfileForm(FlaskForm):
+    username = StringField('Имя пользователя', render_kw={'readonly': True})
+    shipping_address = TextAreaField('Адрес доставки')
+    submit = SubmitField('Сохранить изменения')

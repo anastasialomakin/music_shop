@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Корзина</h1>
+    {% if not items_with_details %}
+        <p>Ваша корзина пуста.</p>
+    {% else %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 8px; border-bottom: 1px solid #ddd;">Товар</th>
+                    <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">Цена</th>
+                    <th style="text-align: center; padding: 8px; border-bottom: 1px solid #ddd;">Количество</th>
+                    <th style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">Сумма</th>
+                    <th style="padding: 8px; border-bottom: 1px solid #ddd;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items_with_details %}
+                <tr>
+                    <td style="padding: 8px; border-bottom: 1px solid #ddd;">{{ item.record.title }}</td>
+                    <td style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">{{ item.record.retail_price }}$</td>
+                    <td style="text-align: center; padding: 8px; border-bottom: 1px solid #ddd;">
+                        <!-- TODO: Добавить логику изменения количества -->
+                        {{ item.quantity }}
+                    </td>
+                    <td style="text-align: right; padding: 8px; border-bottom: 1px solid #ddd;">{{ "%.2f"|format(item.subtotal) }}$</td>
+                    <td style="text-align: center; padding: 8px; border-bottom: 1px solid #ddd;">
+                        <form action="{{ url_for('remove_from_cart', record_id=item.record.id) }}" method="post">
+                            <button type="submit">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <h3 style="text-align: right;">Итого: {{ "%.2f"|format(total) }}$</h3>
+        <div style="text-align: right;">
+            <a href="{{ url_for('checkout') }}" style="display: inline-block; padding: 10px 20px; background: #28a745; color: white; border-radius: 5px;">Оформить заказ</a>
+        </div>
+    {% endif %}
+{% endblock %}
