@@ -3,7 +3,7 @@ venv/
 env/
 __pycache__/
 *.pyc
-app.db
+# app.db
 # .env
 # TODO.txt
 .vscode/
