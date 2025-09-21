@@ -3,28 +3,32 @@ from flask import render_template, flash, redirect, url_for, session, request, a
 from app import db
 from functools import wraps
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import Record, Ensemble, Customer, Composition, Order
-from app.forms import EnsembleForm, LoginForm, EditProfileForm, RecordForm, AdminEditUserForm
+from app.models import Record, Band, User, Composition, Order, Release
+from app.forms import BandForm, LoginForm, EditProfileForm, RecordForm, AdminEditUserForm
 
 @app.route('/')
 @app.route('/index')
 def index():
     """
     Главная страница (каталог товаров).
+    шаблон index.html нужно будет обновить
+    для использования новых полей модели Record.
     """
     records_from_db = Record.query.all()
     return render_template('index.html', title='Каталог', records=records_from_db)
 
-@app.route('/admin/ensemble/add', methods=['GET', 'POST'])
-def add_ensemble():
-    form = EnsembleForm()
-    if form.validate_on_submit():
-        new_ensemble = Ensemble(name=form.name.data, description=form.description.data)
-        db.session.add(new_ensemble)
-        db.session.commit()
-        flash('Ансамбль успешно добавлен!') 
-        return redirect(url_for('index')) 
-    return render_template('add_ensemble.html', title='Добавить ансамбль', form=form)
+@app.route('/record/<int:id>')
+def record_detail(id):
+    """
+    Детали пластинки. Шаблон record_detail.html нужно будет обновить.
+    """
+    record = Record.query.get_or_404(id)
+    return render_template('record_detail.html', title=record.title, record=record)
+
+@app.route('/about')
+def about():
+    return render_template('about.html', title='О нас')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -33,7 +37,7 @@ def login():
     
     form = LoginForm()
     if form.validate_on_submit():
-        user = Customer.query.filter_by(username=form.username.data).first()
+        user = User.query.filter_by(username=form.username.data).first()
 
         if user is None or not user.check_password(form.password.data):
             flash('Неправильное имя пользователя или пароль')
@@ -50,36 +54,46 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    form = EditProfileForm()
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.shipping_address = form.shipping_address.data
 
-@app.route('/record/<int:id>')
-def record_detail(id):
-    record = Record.query.get_or_404(id)
-    return render_template('record_detail.html', title=record.title, record=record)
+        if form.password.data:
+            current_user.set_password(form.password.data)
+            
+        db.session.commit()
+        flash('Ваш профиль был обновлен.')
+        return redirect(url_for('profile'))
+        
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.shipping_address.data = current_user.shipping_address
+            
+    return render_template('profile.html', title='Личный кабинет', form=form)
 
-@app.route('/ensemble/<int:id>')
-def ensemble_detail(id):
-    ensemble = Ensemble.query.get_or_404(id)
-    records = Record.query.join(Record.compositions).filter(Composition.ensemble_id == ensemble.id).all()
-    return render_template('ensemble_detail.html', title=ensemble.name, ensemble=ensemble, records=records)
 
-@app.route('/about')
-def about():
-    return render_template('about.html', title='О нас')
+@app.route('/bands')
+def bands_list():
+    bands = Band.query.all()
+    return render_template('bands_list.html', title='Все группы', bands=bands)
 
-@app.route('/ensembles')
-def ensembles_list():
-    # TODO: Заменить на реальный запрос к БД с пагинацией
-    fake_ensembles = Ensemble.query.all() # Пока просто возьмем всех из БД
-    return render_template('ensembles_list.html', title='Все ансамбли', ensembles=fake_ensembles)
+@app.route('/band/<int:id>')
+def band_detail(id):
+    band = Band.query.get_or_404(id)
+    records = db.session.query(Record).join(Record.releases).join(Composition, Composition.id == Release.composition_id).filter(Composition.band_id == band.id).distinct().all()
+    return render_template('band_detail.html', title=band.name, band=band, records=records)
+
 
 @app.route('/add_to_cart/<int:record_id>', methods=['POST'])
 @login_required
 def add_to_cart(record_id):
     cart = session.get('cart', {})
-    
     cart_item = str(record_id)
     cart[cart_item] = cart.get(cart_item, 0) + 1
-    
     session['cart'] = cart
     flash('Товар добавлен в корзину!')
     return redirect(request.referrer or url_for('index'))
@@ -97,7 +111,7 @@ def cart():
     total_price = 0
     for record in records_in_cart:
         quantity = cart_items.get(str(record.id), 0)
-        subtotal = record.retail_price * quantity
+        subtotal = record.price * quantity
         total_price += subtotal
         items_with_details.append({
             'record': record,
@@ -117,48 +131,40 @@ def remove_from_cart(record_id):
         flash('Товар удален из корзины.')
     return redirect(url_for('cart'))
 
-# покупатель
-
-@app.route('/profile', methods=['GET', 'POST'])
-@login_required
-def profile():
-    form = EditProfileForm()
-    if form.validate_on_submit():
-        current_user.username = form.username.data
-  
-        if current_user.role == 'user':
-            current_user.shipping_address = form.shipping_address.data
-
-        if form.password.data:
-            current_user.set_password(form.password.data)
-            
-        db.session.commit()
-        flash('Ваш профиль был обновлен.')
-        return redirect(url_for('profile'))
-        
-    elif request.method == 'GET':
-        form.username.data = current_user.username
-        if current_user.role == 'user':
-            form.shipping_address.data = current_user.shipping_address
-            
-    return render_template('profile.html', title='Личный кабинет', form=form)
-
 @app.route('/orders')
 @login_required
 def orders_list():
-    # ЗАГЛУШКА: в будущем здесь будет запрос к реальным заказам
-    # orders = Order.query.filter_by(customer_id=current_user.id).all()
-    fake_orders = [
-        {'id': 1, 'date': '2025-09-10', 'total': 49.98, 'status': 'Доставлен'},
-        {'id': 2, 'date': '2025-09-14', 'total': 29.99, 'status': 'В обработке'},
-    ]
-    return render_template('orders.html', title='Мои заказы', orders=fake_orders)
+    orders = Order.query.filter_by(customer_id=current_user.id).order_by(Order.date.desc()).all()
+    return render_template('orders.html', title='Мои заказы', orders=orders)
 
-@app.route('/checkout')
+@app.route('/checkout', methods=['POST'])
 @login_required
 def checkout():
-    # ЗАГЛУШКА: здесь будет логика оформления заказа
-    return render_template('checkout.html', title='Оформление заказа')
+    cart_items = session.get('cart', {})
+    if not cart_items:
+        flash('Ваша корзина пуста.')
+        return redirect(url_for('cart'))
+
+    record_ids = [int(id) for id in cart_items.keys()]
+    records_in_cart = Record.query.filter(Record.id.in_(record_ids)).all()
+
+    for record in records_in_cart:
+        quantity = cart_items.get(str(record.id))
+        if record.in_stock and quantity > 0:
+            new_order_item = Order(
+                total=(record.price * quantity),
+                status='В обработке',
+                quantity=quantity,
+                customer_id=current_user.id,
+                record_id=record.id
+            )
+            db.session.add(new_order_item)
+
+    db.session.commit()
+    session.pop('cart', None)
+    flash('Ваш заказ успешно оформлен!')
+    return redirect(url_for('orders_list'))
+
 
 def manufacturer_required(f):
     @wraps(f)
@@ -168,12 +174,22 @@ def manufacturer_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# лейбл
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.role != 'admin':
+            abort(403) 
+        return f(*args, **kwargs)
+    return decorated_function
+
 
 @app.route('/my-records')
 @login_required
 @manufacturer_required
 def my_records():
+    if not current_user.manufacturer:
+        flash('Ваш аккаунт не связан с профилем производителя.')
+        return redirect(url_for('index'))
     records = Record.query.filter_by(manufacturer_id=current_user.manufacturer.id).all()
     return render_template('my_records.html', title='Мои пластинки', records=records)
 
@@ -182,21 +198,18 @@ def my_records():
 @manufacturer_required
 def add_record():
     form = RecordForm()
-    form.ensemble.choices = [(e.id, e.name) for e in Ensemble.query.order_by('name').all()]
+    form.ensemble.choices = [(b.id, b.name) for b in Band.query.order_by('name').all()]
 
     if form.validate_on_submit():
-        ensemble = Ensemble.query.get(form.ensemble.data)
-        new_composition = Composition(title=form.title.data, ensemble=ensemble)
-        
         new_record = Record(
             title=form.title.data,
             release_year=form.release_year.data,
-            retail_price=form.retail_price.data,
-            stock_quantity=form.stock_quantity.data,
+            price=form.retail_price.data,
+            in_stock=form.stock_quantity.data > 0,
             description=form.description.data,
-            manufacturer_id=current_user.manufacturer.id
+            manufacturer_id=current_user.manufacturer.id,
+            type='Студийная запись' 
         )
-        new_record.compositions.append(new_composition)
         db.session.add(new_record)
         db.session.commit()
         flash('Пластинка успешно добавлена!')
@@ -213,30 +226,26 @@ def edit_record(record_id):
         abort(403)
         
     form = RecordForm(obj=record)
-    form.ensemble.choices = [(e.id, e.name) for e in Ensemble.query.order_by('name').all()]
+    form.ensemble.choices = [(b.id, b.name) for b in Band.query.order_by('name').all()]
     
     if form.validate_on_submit():
         record.title = form.title.data
         record.release_year = form.release_year.data
-        record.retail_price = form.retail_price.data
-        record.stock_quantity = form.stock_quantity.data
+        record.price = form.retail_price.data
+        record.in_stock = form.stock_quantity.data > 0
         record.description = form.description.data
-        ensemble = Ensemble.query.get(form.ensemble.data)
-        if record.compositions:
-            record.compositions[0].ensemble = ensemble
-        else: 
-            new_composition = Composition(title=record.title, ensemble=ensemble)
-            record.compositions.append(new_composition)
-
+        
+        
         db.session.commit()
         flash('Данные о пластинке обновлены.')
         return redirect(url_for('my_records'))
         
     elif request.method == 'GET':
-        if record.compositions:
-            form.ensemble.data = record.compositions[0].ensemble_id
+        form.retail_price.data = record.price
+        form.stock_quantity.data = 1 if record.in_stock else 0
 
     return render_template('record_form.html', title='Редактировать пластинку', form=form)
+
 
 @app.route('/sales-report')
 @login_required
@@ -244,15 +253,7 @@ def edit_record(record_id):
 def sales_report():
     return render_template('sales_report.html', title='Отчет о продажах')
 
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not current_user.is_authenticated or current_user.role != 'admin':
-            abort(403) 
-        return f(*args, **kwargs)
-    return decorated_function
 
-# админ
 @app.route('/admin')
 @login_required
 @admin_required
@@ -263,15 +264,15 @@ def admin_dashboard():
 @login_required
 @admin_required
 def admin_users():
-    users = Customer.query.all()
+    users = User.query.all()
     return render_template('admin_users.html', title='Управление пользователями', users=users)
 
 @app.route('/admin/users/edit/<int:user_id>', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def admin_edit_user(user_id):
-    user = Customer.query.get_or_404(user_id)
-    form = AdminEditUserForm()
+    user = User.query.get_or_404(user_id)
+    form = AdminEditUserForm(obj=user)
     if form.validate_on_submit():
         user.username = form.username.data
         user.role = form.role.data
@@ -292,7 +293,7 @@ def admin_delete_user(user_id):
     if user_id == current_user.id:
         flash('Вы не можете удалить свой собственный аккаунт.')
         return redirect(url_for('admin_users'))
-    user = Customer.query.get_or_404(user_id)
+    user = User.query.get_or_404(user_id)
     db.session.delete(user)
     db.session.commit()
     flash('Пользователь удален.')
@@ -305,9 +306,9 @@ def admin_records():
     records = Record.query.all()
     return render_template('admin_records.html', title='Управление пластинками', records=records)
 
-@app.route('/admin/ensembles')
+@app.route('/admin/bands')
 @login_required
 @admin_required
-def admin_ensembles():
-    ensembles = Ensemble.query.all()
-    return render_template('admin_ensembles.html', title='Управление ансамблями', ensembles=ensembles)
+def admin_bands():
+    bands = Band.query.all()
+    return render_template('admin_bands.html', title='Управление группами', bands=bands)
