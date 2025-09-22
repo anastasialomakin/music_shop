@@ -1,0 +1,58 @@
+{% extends "profile_base.html" %}
+
+{% block profile_content %}
+    <h3 style="text-align: center;">Редактирование профиля</h3>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        
+        <!-- Общие поля для всех -->
+        <p>
+            {{ form.username.label(class="form-label") }}<br>
+            {{ form.username() }}
+            {% for error in form.username.errors %}
+                <span style="color: red; font-size: 0.9em;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+
+        <!-- Уникальные поля для каждой роли -->
+        {% if current_user.role == 'user' %}
+            <p>
+                {{ form.shipping_address.label(class="form-label") }}<br>
+                {{ form.shipping_address(rows=4, style="width: 100%;") }}
+            </p>
+        {% elif current_user.role == 'manufacturer' %}
+            <p>
+                {{ form.company_name.label(class="form-label") }}<br>
+                {{ form.company_name() }}
+            </p>
+            <p>
+                {{ form.company_address.label(class="form-label") }}<br>
+                {{ form.company_address(rows=4, style="width: 100%;") }}
+            </p>
+        {% endif %}
+
+        <hr>
+        <p style="text-align: center; color: #555;"><i>Оставьте поля ниже пустыми, если не хотите менять пароль.</i></p>
+        
+        <p>
+            {{ form.password.label(class="form-label") }}<br>
+            {{ form.password() }}
+        </p>
+        <p>
+            {{ form.password2.label(class="form-label") }}<br>
+            {{ form.password2() }}
+            {% for error in form.password2.errors %}
+                <span style="color: red; font-size: 0.9em;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        
+        <p style="margin-top: 25px;">
+            {{ form.submit() }}
+        </p>
+    </form>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="{{ url_for('profile') }}">Отменить и вернуться в профиль</a>
+    </div>
+
+{% endblock %}

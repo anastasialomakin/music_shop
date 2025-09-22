@@ -1,0 +1,53 @@
+{% extends "admin_base.html" %}
+    {% block admin_content %}
+        <h3>{{ title }}</h3>
+        <form method="POST" class="form-container" style="margin: 0; box-shadow: none; padding: 0;">
+            {{ form.hidden_tag() }}
+            <p>{{ form.title.label }}<br>{{ form.title() }}</p>
+            <p>{{ form.release_year.label }}<br>{{ form.release_year() }}</p>
+            <p>{{ form.band.label }}<br>{{ form.band(id="band_select", style="width: 100%; padding: 12px;") }}</p>
+            <p>{{ form.compositions.label }} (зажмите Ctrl/Cmd для выбора нескольких)<br>{{ form.compositions(id="composition_select", size=10, style="width: 100%;") }}</p>
+            <p>{{ form.submit() }}</p>
+        </form>
+
+        <script>
+            // Добавляем обработчик событий, который сработает, когда вся страница загрузится
+            document.addEventListener('DOMContentLoaded', function() {
+                const bandSelect = document.getElementById('band_select');
+                const compositionSelect = document.getElementById('composition_select');
+
+                // Функция для обновления списка композиций
+                function updateCompositions() {
+                    const bandId = bandSelect.value;
+                    if (!bandId) {
+                        compositionSelect.innerHTML = ''; // Очищаем список, если группа не выбрана
+                        return;
+                    }
+
+                    // Отправляем AJAX-запрос на наш API-маршрут
+                    fetch(`/api/compositions_by_band/${bandId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Очищаем старые опции
+                            compositionSelect.innerHTML = '';
+                            // Добавляем новые опции на основе ответа сервера
+                            data.forEach(composition => {
+                                const option = document.createElement('option');
+                                option.value = composition.id;
+                                option.textContent = composition.title;
+                                compositionSelect.appendChild(option);
+                            });
+                        });
+                }
+
+                // Вешаем обработчик на событие 'change' (когда пользователь выбирает другую группу)
+                bandSelect.addEventListener('change', updateCompositions);
+
+                // Вызываем функцию один раз при загрузке, на случай если мы на странице редактирования
+                // и группа уже выбрана
+                if (bandSelect.value) {
+                    updateCompositions();
+                }
+            });
+        </script>
+    {% endblock %}

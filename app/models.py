@@ -1,106 +1,38 @@
-# заглушка бд пока что
-
-from app import db
+from app import db, login_manager
 import datetime
 from flask_login import UserMixin
-from werkzeug.security import generate_password_hash, check_password_hash 
+from werkzeug.security import generate_password_hash, check_password_hash
 
-# пластинка <-> композиция
-record_compositions = db.Table('record_compositions',
-    db.Column('record_id', db.Integer, db.ForeignKey('records.id'), primary_key=True),
-    db.Column('composition_id', db.Integer, db.ForeignKey('compositions.id'), primary_key=True)
-)
+# связи многие-ко-многим
 
-# ансамбль <-> музыкант
-ensemble_members = db.Table('ensemble_members',
-    db.Column('ensemble_id', db.Integer, db.ForeignKey('ensembles.id'), primary_key=True),
+# группа <-> музыкант
+band_members = db.Table('band_members',
+    db.Column('band_id', db.Integer, db.ForeignKey('bands.id'), primary_key=True),
     db.Column('artist_id', db.Integer, db.ForeignKey('artists.id'), primary_key=True)
 )
 
-class Record(db.Model):
-    __tablename__ = 'records'
+# релиз <-> композиция
+release_compositions = db.Table('release_compositions',
+    db.Column('release_id', db.Integer, db.ForeignKey('releases.id'), primary_key=True),
+    db.Column('composition_id', db.Integer, db.ForeignKey('compositions.id'), primary_key=True)
+)
+
+# основное
+
+@login_manager.user_loader
+def load_user(id):
+    return User.query.get(int(id))
+
+class User(UserMixin, db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
-    release_year = db.Column(db.Integer)
-    format = db.Column(db.String(50))
-    retail_price = db.Column(db.Numeric(10, 2), nullable=False)
-    wholesale_price = db.Column(db.Numeric(10, 2))
-    stock_quantity = db.Column(db.Integer, default=0)
-    description = db.Column(db.Text)
-    cover_image_url = db.Column(db.String(255))
-    
-    manufacturer_id = db.Column(db.Integer, db.ForeignKey('manufacturers.id'))
-
-    compositions = db.relationship('Composition', secondary=record_compositions, back_populates='records')
-    order_items = db.relationship('OrderItem', back_populates='record')
-    manufacturer = db.relationship('Manufacturer', back_populates='records')
-
-    def __repr__(self):
-        return f'<Record {self.title}>'
-
-class Composition(db.Model):
-    __tablename__ = 'compositions'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255), nullable=False)
-    duration_seconds = db.Column(db.Integer)
-    creation_year = db.Column(db.Integer)
-
-    ensemble_id = db.Column(db.Integer, db.ForeignKey('ensembles.id'))
-
-    records = db.relationship('Record', secondary=record_compositions, back_populates='compositions')
-
-    ensemble = db.relationship('Ensemble', back_populates='compositions')
-
-    def __repr__(self):
-        return f'<Composition {self.title}>'
-
-class Ensemble(db.Model):
-    __tablename__ = 'ensembles'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=True, nullable=False)
-    description = db.Column(db.Text)
-
-    compositions = db.relationship('Composition', back_populates='ensemble')
-    members = db.relationship('Artist', secondary=ensemble_members, back_populates='ensembles')
-
-    def __repr__(self):
-        return f'<Ensemble {self.name}>'
-
-class Artist(db.Model):
-    __tablename__ = 'artists'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), nullable=False)
-    bio = db.Column(db.Text)
-
-    ensembles = db.relationship('Ensemble', secondary=ensemble_members, back_populates='members')
-
-    def __repr__(self):
-        return f'<Artist {self.name}>'
-
-class Manufacturer(db.Model):
-    __tablename__ = 'manufacturers'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(150), nullable=False)
-    address = db.Column(db.String(255))
-
-    user_id = db.Column(db.Integer, db.ForeignKey('customers.id'))
-    user = db.relationship('Customer', backref=db.backref('manufacturer', uselist=False))
-
-    records = db.relationship('Record', back_populates='manufacturer')
-    
-    def __repr__(self):
-        return f'<Manufacturer {self.name}>'
-
-class Customer(UserMixin, db.Model):
-    __tablename__ = 'customers'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
+    username = db.Column(db.String(100), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
-    shipping_address = db.Column(db.Text)
+    role = db.Column(db.Enum('user', 'manufacturer', 'admin'), nullable=False)
 
-    role = db.Column(db.String(20), nullable=False, default='user')
-
-    orders = db.relationship('Order', back_populates='customer')
+    customer_profile = db.relationship('CustomerProfile', backref='user', uselist=False, cascade="all, delete-orphan")
+    manufacturer_profile = db.relationship('ManufacturerProfile', backref='user', uselist=False, cascade="all, delete-orphan")
+    orders = db.relationship('Order', backref='user', lazy='dynamic')
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -109,31 +41,92 @@ class Customer(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def __repr__(self):
-        return f'<Customer {self.username}>'
+        return f'<User {self.username}>'
+
+class CustomerProfile(db.Model):
+    __tablename__ = 'customer_profiles'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    shipping_address = db.Column(db.Text, nullable=True)
+
+class ManufacturerProfile(db.Model):
+    __tablename__ = 'manufacturer_profiles'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
+    company_name = db.Column(db.String(150), nullable=False)
+    company_address = db.Column(db.String(255))
+    records = db.relationship('Record', backref='manufacturer', lazy='dynamic')
+
+class Genre(db.Model):
+    __tablename__ = 'genres'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    bands = db.relationship('Band', backref='genre', lazy='dynamic')
+
+class Band(db.Model):
+    __tablename__ = 'bands'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    bio = db.Column(db.Text)
+    genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'))
+    
+    members = db.relationship('Artist', secondary=band_members, back_populates='bands')
+    compositions = db.relationship('Composition', backref='author_band', lazy='dynamic')
+    releases = db.relationship('Release', backref='band', lazy='dynamic')
+
+class Artist(db.Model):
+    __tablename__ = 'artists'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    bio = db.Column(db.Text)
+    bands = db.relationship('Band', secondary=band_members, back_populates='members')
+
+class Composition(db.Model):
+    __tablename__ = 'compositions'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    duration = db.Column(db.Integer)
+    author_band_id = db.Column(db.Integer, db.ForeignKey('bands.id'), nullable=False)
+    releases = db.relationship('Release', secondary=release_compositions, back_populates='compositions')
+
+class Release(db.Model):
+    __tablename__ = 'releases'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    release_year = db.Column(db.Integer)
+    cover_image_url = db.Column(db.String(255))
+    band_id = db.Column(db.Integer, db.ForeignKey('bands.id'), nullable=False)
+    records = db.relationship('Record', backref='release', lazy='dynamic')
+    compositions = db.relationship('Composition', secondary=release_compositions, back_populates='releases')
+
+class Record(db.Model):
+    __tablename__ = 'records'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    release_year = db.Column(db.Integer)
+    price = db.Column(db.Numeric(10, 2), nullable=False)
+    stock_quantity = db.Column(db.Integer, nullable=False, default=0)
+    description = db.Column(db.Text)
+    cover_image_url = db.Column(db.String(255))
+    record_type = db.Column(db.String(45))
+    release_id = db.Column(db.Integer, db.ForeignKey('releases.id'), nullable=False)
+    manufacturer_profile_id = db.Column(db.Integer, db.ForeignKey('manufacturer_profiles.id'), nullable=False)
 
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     order_date = db.Column(db.DateTime, default=datetime.datetime.utcnow)
-    total_amount = db.Column(db.Numeric(10, 2))
-    status = db.Column(db.String(50), default='Processing')
-    
-    customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'))
-
-    customer = db.relationship('Customer', back_populates='orders')
-    items = db.relationship('OrderItem', back_populates='order')
-
-    def __repr__(self):
-        return f'<Order {self.id}>'
+    total_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    status = db.Column(db.String(50), nullable=False)
+    payment_method = db.Column(db.String(50))
+    items = db.relationship('OrderItem', backref='order', lazy='dynamic', cascade="all, delete-orphan")
 
 class OrderItem(db.Model):
     __tablename__ = 'order_items'
     id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)
+    record_id = db.Column(db.Integer, db.ForeignKey('records.id'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
-    price_per_item = db.Column(db.Numeric(10, 2), nullable=False)
-    
-    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'))
-    record_id = db.Column(db.Integer, db.ForeignKey('records.id'))
-
-    order = db.relationship('Order', back_populates='items')
-    record = db.relationship('Record', back_populates='order_items')
+    price_at_purchase = db.Column(db.Numeric(10, 2), nullable=False)
+    record = db.relationship('Record')

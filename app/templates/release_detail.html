@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ release.title }}</h1>
+<p>Группа: <a href="{{ url_for('band_detail', id=release.band.id) }}">{{ release.band.name }}</a></p>
+<p>Год: {{ release.release_year }}</p>
+<h3>Треклист</h3>
+<ul>
+{% for comp in release.compositions %}
+    <li>{{ comp.title }}</li>
+{% endfor %}
+</ul>
+<hr>
+<h3>Издания в нашем магазине:</h3>
+<div class="catalog-grid">
+    {% for record in release.records %}
+        <div class="record-card">
+             <a href="{{ url_for('record_detail', id=record.id) }}">
+                <p>{{ record.title }}</p>
+                <p><strong>{{ record.price }}₽</strong></p>
+             </a>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

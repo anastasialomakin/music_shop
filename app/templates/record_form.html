@@ -1,14 +1,16 @@
 {% extends "profile_base.html" %}
 {% block profile_content %}
     <h3>{{ title }}</h3>
-    <form method="POST" action="">
+    <form method="POST" action="" enctype="multipart/form-data" class="form-container" style="margin: 0; box-shadow: none; padding: 0;">
         {{ form.hidden_tag() }}
-        <p>{{ form.title.label }}<br>{{ form.title(size=64) }}</p>
-        <p>{{ form.ensemble.label }}<br>{{ form.ensemble() }}</p>
-        <p>{{ form.release_year.label }}<br>{{ form.release_year(size=10) }}</p>
-        <p>{{ form.retail_price.label }}<br>{{ form.retail_price(size=10) }}</p>
-        <p>{{ form.stock_quantity.label }}<br>{{ form.stock_quantity(size=10) }}</p>
-        <p>{{ form.description.label }}<br>{{ form.description(cols=60, rows=5) }}</p>
+        <p>{{ form.title.label }}<br>{{ form.title() }}</p>
+        <p>{{ form.release.label }}<br>{{ form.release(style="width: 100%; padding: 12px;") }}</p>
+        <p>{{ form.release_year.label }}<br>{{ form.release_year() }}</p>
+        <p>{{ form.price.label }}<br>{{ form.price() }}</p>
+        <p>{{ form.stock_quantity.label }}<br>{{ form.stock_quantity() }}</p>
+        <p>{{ form.record_type.label }}<br>{{ form.record_type() }}</p>
+        <p>{{ form.cover_image.label }}<br>{{ form.cover_image() }}</p>
+        <p>{{ form.description.label }}<br>{{ form.description(rows=5, style="width: 100%;") }}</p>
         <p>{{ form.submit() }}</p>
     </form>
 {% endblock %}

@@ -1,8 +1,24 @@
 {% extends "base.html" %}
-
 {% block content %}
+<div class="form-container">
     <h1>Оформление заказа</h1>
-    <p>
-        Форма для подтверждения адреса доставки и выбора способа оплаты.
-    </p>
+    <div class="order-summary">
+        <h4>Состав заказа:</h4>
+        <ul>
+        {% for item in items %}
+            <li>{{ item.title }} - {{ cart[item.id|string] }} шт.</li>
+        {% endfor %}
+        </ul>
+        <h4>Итого: {{ "%.2f"|format(total) }}₽</h4>
+    </div>
+    <hr>
+    <form method="POST" action="">
+        {{ form.hidden_tag() }}
+        <p>{{ form.shipping_address.label }}<br>{{ form.shipping_address(rows=4, style="width: 100%;") }}</p>
+        <p>{{ form.payment_method.label }}<br>{{ form.payment_method() }}</p>
+        <p>{{ form.comment.label }}<br>{{ form.comment(rows=3, style="width: 100%;") }}</p>
+        <p>{{ form.submit() }}</p>
+        <a href="{{ url_for('cart') }}">Отменить и вернуться в корзину</a>
+    </form>
+</div>
 {% endblock %}

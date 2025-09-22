@@ -1,14 +1,42 @@
 {% extends "base.html" %}
+
 {% block content %}
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h1>Админ-панель</h1>
+    <h1>Админ-панель</h1>
+    <div class="profile-container"> 
+        <aside class="profile-sidebar">
+            <a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i> Главная
+            </a>
+            <a href="{{ url_for('admin_users') }}" class="{% if 'admin_user' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-people-fill"></i> Пользователи
+            </a>
+            <a href="#" class="{% if 'admin_order' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-box-seam"></i> Заказы
+            </a>
+            <hr>
+            <p style="padding: 10px 15px; color: #777; font-size: 0.9em; margin: 0;">Управление контентом</p>
+            <a href="#">
+                <i class="bi bi-disc-fill"></i> Пластинки
+            </a>
+            <a href="{{ url_for('admin_releases') }}" class="{% if 'release' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-journal-album"></i> Релизы
+            </a>
+            <a href="{{ url_for('admin_compositions') }}" class="{% if 'composition' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-music-note-list"></i> Композиции
+            </a>
+            <a href="{{ url_for('admin_bands') }}" class="{% if 'band' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-people"></i> Группы
+            </a>
+            <a href="{{ url_for('admin_artists') }}" class="{% if 'artist' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-person-badge"></i> Артисты
+            </a>
+            <a href="{{ url_for('admin_genres') }}" class="{% if 'genre' in request.endpoint %}active{% endif %}">
+                <i class="bi bi-tags-fill"></i> Жанры
+            </a>
+        </aside>
+
+        <div class="profile-content">
+            {% block admin_content %}{% endblock %}
+        </div>
     </div>
-    <nav style="margin-bottom: 20px; border-bottom: 1px solid #ddd; padding-bottom: 10px;">
-        <a href="{{ url_for('admin_dashboard') }}" style="margin-right: 15px;">Главная</a>
-        <a href="{{ url_for('admin_users') }}" style="margin-right: 15px;">Пользователи</a>
-        <a href="{{ url_for('admin_records') }}" style="margin-right: 15px;">Пластинки</a>
-        <a href="{{ url_for('admin_ensembles') }}" style="margin-right: 15px;">Ансамбли</a>
-    </nav>
-    
-    {% block admin_content %}{% endblock %}
 {% endblock %}

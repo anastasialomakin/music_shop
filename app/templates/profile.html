@@ -1,39 +1,29 @@
 {% extends "profile_base.html" %}
 
 {% block profile_content %}
-    <h3>Персональные данные</h3>
-    <form action="" method="post">
-        {{ form.hidden_tag() }}
-        <p>
-            {{ form.username.label }}<br>
-            {{ form.username(size=32) }}
-            {% for error in form.username.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-
-        {% if current_user.role == 'user' %}
-        <p>
-            {{ form.shipping_address.label }}<br>
-            {{ form.shipping_address(cols=50, rows=4) }}
-        </p>
-        {% endif %}
-
-        <hr>
-        <p><i>Оставьте поля ниже пустыми, если не хотите менять пароль.</i></p>
-        <p>
-            {{ form.password.label }}<br>
-            {{ form.password(size=32) }}
-        </p>
-        <p>
-            {{ form.password2.label }}<br>
-            {{ form.password2(size=32) }}
-            {% for error in form.password2.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>{{ form.submit() }}</p>
-    </form>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Персональные данные</h3>
+        <div>
+            <!-- Иконка редактирования -->
+            <a href="{{ url_for('edit_profile') }}" title="Редактировать" style="font-size: 1.5rem; margin-right: 15px;">
+                <i class="bi bi-pencil-square"></i>
+            </a>
+            <!-- Иконка выхода -->
+            <a href="{{ url_for('logout') }}" title="Выйти из аккаунта" style="font-size: 1.5rem; color: #dc3545;">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+    </div>
     <hr>
-    <a href="{{ url_for('logout') }}" class="logout-button">Выйти из аккаунта</a>
+    
+    <div class="profile-details">
+        <p><strong>Имя пользователя:</strong> {{ current_user.username }}</p>
+        {% if current_user.role == 'user' %}
+            <p><strong>Адрес доставки:</strong> {{ current_user.customer_profile.shipping_address or 'Не указан' }}</p>
+        {% elif current_user.role == 'manufacturer' %}
+            <p><strong>Название компании:</strong> {{ current_user.manufacturer_profile.company_name }}</p>
+            <p><strong>Адрес компании:</strong> {{ current_user.manufacturer_profile.company_address or 'Не указан' }}</p>
+        {% endif %}
+    </div>
+
 {% endblock %}

@@ -1,0 +1,16 @@
+{% extends "admin_base.html" %}
+{% block admin_content %}
+    <h3>Профиль пользователя: {{ user.username }}</h3>
+    <p><strong>ID:</strong> {{ user.id }}</p>
+    <p><strong>Роль:</strong> {{ user.role }}</p>
+    <hr>
+    {% if user.role == 'user' and user.customer_profile %}
+        <h4>Профиль покупателя</h4>
+        <p><strong>Адрес доставки:</strong> {{ user.customer_profile.shipping_address or 'Не указан' }}</p>
+    {% elif user.role == 'manufacturer' and user.manufacturer_profile %}
+        <h4>Профиль производителя</h4>
+        <p><strong>Название компании:</strong> {{ user.manufacturer_profile.company_name }}</p>
+        <p><strong>Адрес компании:</strong> {{ user.manufacturer_profile.company_address or 'Не указан' }}</p>
+    {% endif %}
+    <a href="{{ url_for('admin_users') }}">Назад к списку</a>
+{% endblock %}

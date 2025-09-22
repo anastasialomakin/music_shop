@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="bands-list-container">
+    <h2>Группы</h2>
+    <div class="search-sort-bar">
+         <input type="search" placeholder="Поиск по названию...">
+         <select><option>Сортировка (в разработке)</option></select>
+    </div>
+    <div class="band-list-header" style="display: flex; justify-content: space-between; padding: 0 20px; color: #777;">
+        <h4>Название группы</h4>
+        <h4>Релизов в магазине</h4>
+    </div>
+    {% for band in bands %}
+        <a href="{{ url_for('band_detail', id=band.id) }}" style="text-decoration: none; color: inherit;">
+            <div class="band-row">
+                <span class="band-row-name">{{ band.name }}</span>
+                <span class="band-row-count">{{ band.releases.count() }}</span>
+            </div>
+        </a>
+    {% endfor %}
+</div>
+<!-- TODO: Пагинация -->
+<div class="pagination" style="margin-top: 20px; text-align: center;">
+    <p>(Пагинация в разработке)</p>
+</div>
+{% endblock %}

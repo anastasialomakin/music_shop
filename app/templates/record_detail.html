@@ -1,53 +1,15 @@
-<!-- app/templates/record_detail.html -->
 {% extends "base.html" %}
-
 {% block content %}
-    <div class="record-detail">
-        <div class="record-detail-image">
-            <img src="{{ record.cover_image_url or 'https://via.placeholder.com/400' }}" alt="Обложка {{ record.title }}">
-        </div>
-        <div class="record-detail-info">
-            <h1>{{ record.title }}</h1>
-
-            <!-- Проверяем, есть ли композиции и ансамбль, и делаем имя ссылкой -->
-            {% if record.compositions and record.compositions[0].ensemble %}
-                <h2><a href="{{ url_for('ensemble_detail', id=record.compositions[0].ensemble.id) }}">{{ record.compositions[0].ensemble.name }}</a></h2>
-            {% else %}
-                <h2>Неизвестный исполнитель</h2>
-            {% endif %}
-            
-            <p><strong>Год выпуска:</strong> {{ record.release_year or 'Н/Д' }}</p>
-            <p><strong>Формат:</strong> {{ record.format or 'LP' }}</p>
-            
-            <!-- Используем связь с производителем (лейблом) -->
-            {% if record.manufacturer %}
-                <p><strong>Лейбл:</strong> {{ record.manufacturer.name }}</p>
-            {% endif %}
-            
-            <h3>Цена: {{ record.retail_price }}$</h3>
-
-            {% if current_user.is_authenticated and current_user.role == 'user' %}
-                <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post">
-                    <button type="submit" style="padding: 10px 20px; font-size: 1.2em; cursor: pointer;">Добавить в корзину</button>
-                </form>
-            {% endif %}
-            
-            <div class="description" style="margin-top: 20px;">
-                <h3>Описание</h3>
-                <p>{{ record.description or 'Описание отсутствует.' }}</p>
-            </div>
-            
-            <!-- Выводим реальный треклист, используя связь с композициями -->
-            <div class="tracklist" style="margin-top: 20px;">
-                <h3>Треклист</h3>
-                <ul>
-                    {% for composition in record.compositions %}
-                        <li>{{ composition.title }}</li>
-                    {% else %}
-                        <li>Треклист не указан.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
-    </div>
+<h1>{{ record.title }}</h1>
+<img src="{{ url_for('uploaded_file', filename=record.cover_image_url) if record.cover_image_url else 'https://via.placeholder.com/200' }}" alt="Обложка">
+<p>Группа: <a href="{{ url_for('band_detail', id=record.release.band.id) }}">{{ record.release.band.name }}</a></p>
+<p>Релиз: <a href="{{ url_for('release_detail', id=record.release.id) }}">{{ record.release.title }} ({{ record.release.release_year }})</a></p>
+<p>Производитель: {{ record.manufacturer.company_name }}</p>
+<p>Цена: {{ record.price }}₽</p>
+<h3>Треклист</h3>
+<ul>
+{% for comp in record.release.compositions %}
+    <li>{{ comp.title }}</li>
+{% endfor %}
+</ul>
 {% endblock %}

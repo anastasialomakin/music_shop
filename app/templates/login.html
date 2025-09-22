@@ -1,20 +1,25 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <div class="form-container">
-        <h1>{{ title }}</h1>
-        <form action="" method="post">
-            {{ form.hidden_tag() }}
-            <p>
-                {{ form.username.label }}<br>
-                {{ form.username(size=32) }}
-            </p>
-            <p>
-                {{ form.password.label }}<br>
-                {{ form.password(size=32) }}
-            </p>
-            <p>{{ form.remember_me() }} {{ form.remember_me.label }}</p>
-            <p>{{ form.submit() }}</p>
-        </form>
-    </div>
+<div class="form-container">
+    <h1>Вход</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.username.label(class="form-label") }}<br>
+            {{ form.username(size=32) }}
+        </p>
+        <p>
+            {{ form.password.label(class="form-label") }}<br>
+            {{ form.password(size=32) }}
+        </p>
+        <p class="remember-me-group">
+            {{ form.remember_me() }}
+            {{ form.remember_me.label }}
+        </p>
+        <p>
+            {{ form.submit() }}
+        </p>
+    </form>
+    <p class="form-link">Новый пользователь? <a href="{{ url_for('register') }}">Нажмите, чтобы зарегистрироваться!</a></p>
+</div>
 {% endblock %}

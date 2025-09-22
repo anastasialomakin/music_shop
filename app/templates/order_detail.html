@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="form-container">
+    <h1>Детали заказа #{{ order.id }}</h1>
+    <p><strong>Дата заказа:</strong> {{ order.order_date.strftime('%d-%m-%Y %H:%M') }}</p>
+    <p><strong>Статус:</strong> {{ order.status }}</p>
+    <p><strong>Способ оплаты:</strong> {{ order.payment_method }}</p>
+    <hr>
+    <h4>Состав заказа:</h4>
+    <ul>
+    {% for item in order.items %}
+        <li>{{ item.record.title }} - {{ item.quantity }} шт. x {{ item.price_at_purchase }}₽</li>
+    {% endfor %}
+    </ul>
+    <h4><strong>Итого: {{ order.total_amount }}₽</strong></h4>
+    <hr>
+    <a href="{{ url_for('orders_list') }}">Назад к списку заказов</a>
+</div>
+{% endblock %}

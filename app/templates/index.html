@@ -1,72 +1,55 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <h2>Каталог пластинок</h2>
-
-    <div class="catalog-container">
-        <aside class="filters-sidebar">
-            <h4>Фильтры</h4>
-            
-            <!-- TODO: Сделать фильтры динамическими -->
-            <div class="filter-group">
-                <h5>Жанры</h5>
-                <ul>
-                    <li><a href="#">Rock</a></li>
-                    <li><a href="#">Jazz</a></li>
-                    <li><a href="#">Electronic</a></li>
-                    <li><a href="#">Classical</a></li>
-                </ul>
-            </div>
-            
-            <div class="filter-group">
-                <h5>Цена</h5>
-                <!-- Здесь можно слайдер сделать или поля "от" и "до" -->
-                <p>от: <input type="number" style="width: 60px;"> до: <input type="number" style="width: 60px;"></p>
-            </div>
-        </aside>
-        <div class="catalog-main">
-            <div class="search-sort-bar">
-                <input type="search" placeholder="Поиск по названию или исполнителю...">
-                <select>
-                    <option value="default">Сортировка по умолчанию</option>
-                    <option value="price_asc">Сначала дешевые</option>
-                    <option value="price_desc">Сначала дорогие</option>
-                    <option value="name_asc">По названию (А-Я)</option>
-                </select>
-            </div>
-
-            <div class="catalog-grid">
-                {% for record in records %}
-                    <div class="record-card">
-                        <a href="{{ url_for('record_detail', id=record.id) }}" style="text-decoration: none; color: inherit;">
-                            <img src="{{ record.cover_image_url or 'https://via.placeholder.com/200' }}" alt="Обложка {{ record.title }}">
-                            <h3>{{ record.title }}</h3>
-                            {% if record.compositions and record.compositions[0].ensemble %}
-                                <p>{{ record.compositions[0].ensemble.name }}</p>
-                            {% endif %}
-                            <p><strong>{{ record.retail_price }}$</strong></p>
-                        </a>
-            
-                        {% if record.stock_quantity > 0 %}
-                            <p class="status-in-stock" style="color: green;">В наличии</p>
-                            {% if current_user.is_authenticated and current_user.role == 'user' %}
-                                <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post" style="display: inline;">
-                                    <button type="submit">Добавить в корзину</button>
-                                </form>
-                            {% endif %}
-                        {% else %}
-                            <p class="status-out-of-stock" style="color: red;">Нет в наличии</p>
-                        {% endif %}
-                    </div>
-                {% else %}
-                    <p>В каталоге пока нет пластинок.</p>
-                {% endfor %}
-            </div>
-
-            <!-- TODO: пагинация (по 20 карточек на странице) -->
-            <div class="pagination" style="margin-top: 20px; text-align: center;">
-                <p>Здесь будет переключение страниц: 1, 2, 3...</p>
-            </div>
+<!-- фильтры -->
+<h2>Каталог пластинок</h2>
+<div class="catalog-container">
+    <aside class="filters-sidebar">
+        <h4>Фильтры</h4>
+        <p>(в разработке)</p>
+    </aside>
+    <div class="catalog-main">
+        <div class="search-sort-bar">товар
+            <input type="search" placeholder="Поиск...">
+            <select><option>Сортировка (в разработке)</option></select>
+        </div>
+        <div class="catalog-grid">
+    {% for record in records %}
+    <div class="record-card">
+        <a href="{{ url_for('record_detail', id=record.id) }}">
+            <img src="{{ url_for('uploaded_file', filename=record.cover_image_url) if record.cover_image_url else 'https://via.placeholder.com/200' }}" alt="Обложка">
+            <h3>{{ record.title }}</h3>
+            <p>{{ record.release.band.name }}</p>
+            <p><strong>{{ record.price }}₽</strong></p>
+            {% if record.stock_quantity > 0 %}
+    <p style="color: green;">В наличии</p>
+    {% if current_user.is_authenticated and current_user.role == 'user' %}
+        {% if record.id|string in session.get('cart', {}) %}
+        <div class="cart-controls">
+            <form action="{{ url_for('decrease_cart_item', record_id=record.id) }}" method="post" style="display: inline;">
+                <button type="submit">-</button>
+            </form>
+            <span>{{ session['cart'][record.id|string] }} шт.</span>
+            <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post" style="display: inline;">
+                <button type="submit">+</button>
+            </form>
+        </div>
+        {% else %}
+            <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post">
+                <button type="submit">Добавить в корзину</button>
+            </form>
+        {% endif %}
+    {% endif %}
+{% else %}
+    <p style="color: red;">Нет в наличии</p>
+{% endif %}
+        </a>
+    </div>
+    {% endfor %}
+        </div>
+        <!-- TODO: Пагинация -->
+        <div class="pagination" style="margin-top: 20px; text-align: center;">
+            <p>(Пагинация в разработке)</p>
         </div>
     </div>
+</div>
 {% endblock %}

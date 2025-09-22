@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ band.name }}</h1>
+<p>{{ band.bio }}</p>
+<h3>Состав:</h3>
+<ul>{% for member in band.members %}<li>{{ member.name }}</li>{% endfor %}</ul>
+<hr>
+<h3>Релизы в нашем магазине:</h3>
+<div class="catalog-grid" style="margin-top: 20px;">
+    {% for release in band.releases %}
+        <div class="record-card">
+            <a href="{{ url_for('release_detail', id=release.id) }}">
+                <img src="{{ release.cover_image_url or 'https://via.placeholder.com/200' }}" alt="Обложка">
+                <h4>{{ release.title }} ({{ release.release_year }})</h4>
+            </a>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
