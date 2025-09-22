@@ -8,7 +8,7 @@ services:
     volumes:
       - .:/app  
     environment:
-      - DATABASE_URL=mysql+pymysql://root:secretpassword@db/mydb
+      - DATABASE_URL=mysql+pymysql://root:7878@127.0.0.1/music_store_db
       - SECRET_KEY=a_very_secret_key
     depends_on:
       - db
@@ -17,8 +17,8 @@ services:
     image: mysql:8.0
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: secretpassword
-      MYSQL_DATABASE: mydb
+      MYSQL_ROOT_PASSWORD: 7878
+      MYSQL_DATABASE: music_store_db
     volumes:
       - mysql-data:/var/lib/mysql
 

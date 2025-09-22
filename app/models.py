@@ -18,7 +18,7 @@ class Manufacturer(db.Model):
     name = db.Column(db.String(45), nullable=False)
     address = db.Column(db.String(255), nullable=False)
 
-    user_id = db.Column('users_idusers', db.Integer, db.ForeignKey('users.idusers'), unique=True)
+    user_id = db.Column('users_idcustomers', db.Integer, db.ForeignKey('users.idcustomers'), unique=True)
 
     records = db.relationship('Record', back_populates='manufacturer')
     
