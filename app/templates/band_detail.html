@@ -1,7 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ band.name }}</h1>
-<p>{{ band.bio }}</p>
+{% if band.cover_image_url %}
+  <img src="{{ url_for('uploaded_file', filename=band.cover_image_url) }}" alt="Обложка группы {{ band.name }}" style="max-width:200px; margin-bottom:20px;">
+{% endif %}
 <h3>Состав:</h3>
 <ul>{% for member in band.members %}<li>{{ member.name }}</li>{% endfor %}</ul>
 <hr>
@@ -10,7 +12,7 @@
     {% for release in band.releases %}
         <div class="record-card">
             <a href="{{ url_for('release_detail', id=release.id) }}">
-                <img src="{{ release.cover_image_url or 'https://via.placeholder.com/200' }}" alt="Обложка">
+                <img src="{{ url_for('uploaded_file', filename=release.cover_image_url) }}" alt="Обложка">
                 <h4>{{ release.title }} ({{ release.release_year }})</h4>
             </a>
         </div>

@@ -23,7 +23,7 @@
                     <div class="record-card">
                         <a href="{{ url_for('release_detail', id=release.id) }}" style="text-decoration: none; color: inherit;">
                             <!-- Добавляем изображение, как договаривались -->
-                            <img src="{{ release.cover_image_url or 'https://via.placeholder.com/200' }}" alt="Обложка {{ release.title }}">
+                            <img src="{{ url_for('uploaded_file', filename=release.cover_image_url) if release.cover_image_url else 'https://via.placeholder.com/200' }}" alt="Обложка релиза">
                             <h3>{{ release.title }}</h3>
                             <p>{{ release.band.name }}</p>
                         </a>

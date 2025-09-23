@@ -1,54 +1,99 @@
 {% extends "base.html" %}
 {% block content %}
-<!-- фильтры -->
 <h2>Каталог пластинок</h2>
 <div class="catalog-container">
     <aside class="filters-sidebar">
         <h4>Фильтры</h4>
-        <p>(в разработке)</p>
+        <form method="get" action="{{ url_for('index') }}" class="filters-form">
+
+            <label for="sort">Сортировка по цене:</label>
+            <select name="sort" id="sort">
+                <option value="price_asc" {% if selected_sort == 'price_asc' %}selected{% endif %}>По возрастанию</option>
+                <option value="price_desc" {% if selected_sort == 'price_desc' %}selected{% endif %}>По убыванию</option>
+            </select>
+
+            <label for="band">Группа:</label>
+            <select name="band" id="band">
+                <option value="">Все</option>
+                {% for band in bands %}
+                    <option value="{{ band.id }}" {% if band.id == selected_band %}selected{% endif %}>{{ band.name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="available">В наличии:</label>
+            <select name="available" id="available">
+                <option value="">Любой</option>
+                <option value="yes" {% if selected_available == 'yes' %}selected{% endif %}>Да</option>
+                <option value="no" {% if selected_available == 'no' %}selected{% endif %}>Нет</option>
+            </select>
+
+            <label for="price_min">Цена от:</label>
+            <input type="number" step="0.01" name="price_min" id="price_min" value="{{ price_min or '' }}" placeholder="0">
+
+            <label for="price_max">Цена до:</label>
+            <input type="number" step="0.01" name="price_max" id="price_max" value="{{ price_max or '' }}" placeholder="10000">
+
+            <div style="margin-top: 15px;">
+                <button type="submit" class="btn-apply">Применить</button>
+                <a href="{{ url_for('index') }}" class="btn-reset" style="margin-left: 10px;">Сбросить фильтры</a>
+            </div>
+        </form>
     </aside>
+
     <div class="catalog-main">
-        <div class="search-sort-bar">товар
-            <input type="search" placeholder="Поиск...">
-            <select><option>Сортировка (в разработке)</option></select>
-        </div>
         <div class="catalog-grid">
-    {% for record in records %}
-    <div class="record-card">
-        <a href="{{ url_for('record_detail', id=record.id) }}">
-            <img src="{{ url_for('uploaded_file', filename=record.cover_image_url) if record.cover_image_url else 'https://via.placeholder.com/200' }}" alt="Обложка">
-            <h3>{{ record.title }}</h3>
-            <p>{{ record.release.band.name }}</p>
-            <p><strong>{{ record.price }}₽</strong></p>
-            {% if record.stock_quantity > 0 %}
-    <p style="color: green;">В наличии</p>
-    {% if current_user.is_authenticated and current_user.role == 'user' %}
-        {% if record.id|string in session.get('cart', {}) %}
-        <div class="cart-controls">
-            <form action="{{ url_for('decrease_cart_item', record_id=record.id) }}" method="post" style="display: inline;">
-                <button type="submit">-</button>
-            </form>
-            <span>{{ session['cart'][record.id|string] }} шт.</span>
-            <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post" style="display: inline;">
-                <button type="submit">+</button>
-            </form>
+            {% if records|length == 0 %}
+                <p style="font-size: 1.2em; color: #004085; margin-top: 30px; text-align: center; width: 100%;">
+                    Ничего не найдено по заданным фильтрам.
+                </p>
+            {% else %}
+                {% for record in records %}
+                    <div class="record-card">
+                        <a href="{{ url_for('record_detail', id=record.id) }}">
+                            <img src="{{ url_for('uploaded_file', filename=record.cover_image_url) if record.cover_image_url else 'https://via.placeholder.com/200' }}" alt="Обложка">
+                            <h3>{{ record.title }}</h3>
+                            <p>{{ record.release.band.name }}</p>
+                            <p><strong>{{ record.price }}₽</strong></p>
+                            {% if record.stock_quantity > 0 %}
+                                <p style="color: green;">В наличии</p>
+                                {% if current_user.is_authenticated and current_user.role == 'user' %}
+                                    {% if record.id|string in session.get('cart', {}) %}
+                                        <div class="cart-controls">
+                                            <form action="{{ url_for('decrease_cart_item', record_id=record.id) }}" method="post" style="display: inline;">
+                                                <button type="submit">-</button>
+                                            </form>
+                                            <span>{{ session['cart'][record.id|string] }} шт.</span>
+                                            <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post" style="display: inline;">
+                                                <button type="submit">+</button>
+                                            </form>
+                                        </div>
+                                    {% else %}
+                                        <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post">
+                                            <button type="submit">Добавить в корзину</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <p style="color: red;">Нет в наличии</p>
+                            {% endif %}
+                        </a>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
-        {% else %}
-            <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post">
-                <button type="submit">Добавить в корзину</button>
-            </form>
-        {% endif %}
-    {% endif %}
-{% else %}
-    <p style="color: red;">Нет в наличии</p>
-{% endif %}
-        </a>
-    </div>
-    {% endfor %}
-        </div>
-        <!-- TODO: Пагинация -->
-        <div class="pagination" style="margin-top: 20px; text-align: center;">
-            <p>(Пагинация в разработке)</p>
+
+        <div class="pagination" style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 20px;">
+            {% for p in range(1, pagination.pages + 1) %}
+                {% if p == pagination.page %}
+                    <span style="padding: 8px 12px; background-color: #007bff; color: white; border-radius: 4px; font-weight: bold; cursor: default;">
+                        {{ p }}
+                    </span>
+                {% else %}
+                    <a href="{{ url_for('index', page=p, band=selected_band, available=selected_available, price_min=price_min, price_max=price_max, sort=selected_sort) }}" style="padding: 8px 12px; background-color: #e2e6ea; color: #333; border-radius: 4px; text-decoration: none;">
+                        {{ p }}
+                    </a>
+                {% endif %}
+            {% endfor %}
         </div>
     </div>
 </div>

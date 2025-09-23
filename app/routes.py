@@ -34,8 +34,48 @@ def uploaded_file(filename):
 @app.route('/')
 @app.route('/index')
 def index():
-    records = Record.query.limit(20).all()
-    return render_template('index.html', title='Каталог', records=records)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+
+    band_id = request.args.get('band', type=int)
+    available = request.args.get('available')
+    price_min = request.args.get('price_min', type=float)
+    price_max = request.args.get('price_max', type=float)
+    sort = request.args.get('sort', 'price_asc')
+
+    query = Record.query
+
+    if band_id:
+        query = query.join(Record.release).filter(Release.band_id == band_id)
+
+    if available == 'yes':
+        query = query.filter(Record.stock_quantity > 0)
+    elif available == 'no':
+        query = query.filter(Record.stock_quantity == 0)
+
+    if price_min is not None:
+        query = query.filter(Record.price >= price_min)
+    if price_max is not None:
+        query = query.filter(Record.price <= price_max)
+
+    # Применяем сортировку
+    if sort == 'price_desc':
+        query = query.order_by(Record.price.desc())
+    else:
+        query = query.order_by(Record.price.asc())
+
+    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+    records = pagination.items
+
+    bands = Band.query.all()
+
+    return render_template('index.html', title='Каталог', records=records, pagination=pagination,
+                           bands=bands,
+                           selected_band=band_id,
+                           selected_available=available,
+                           price_min=price_min,
+                           price_max=price_max,
+                           selected_sort=sort)
 
 @app.route('/about')
 def about():

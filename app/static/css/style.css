@@ -261,6 +261,90 @@ footer {
     text-align: center; 
 }
 
+.filters-sidebar {
+    background-color: #f0f6ff;
+    border: 1px solid #c1d1ff;
+    padding: 20px;
+    border-radius: 8px;
+    width: 250px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #003366;
+    box-shadow: 0 4px 8px rgba(0, 51, 102, 0.1);
+}
+
+.filters-sidebar h4 {
+    margin-bottom: 15px;
+    border-bottom: 2px solid #3366cc;
+    padding-bottom: 5px;
+    font-weight: 600;
+}
+
+.filters-form label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.filters-form select,
+.filters-form input[type="number"] {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #99b3ff;
+    border-radius: 5px;
+    font-size: 14px;
+    color: #003366;
+    background-color: white;
+    transition: border-color 0.3s ease;
+}
+
+.filters-form select:focus,
+.filters-form input[type="number"]:focus {
+    border-color: #3366cc;
+    outline: none;
+    box-shadow: 0 0 5px #99b3ff;
+}
+
+.btn-apply {
+    margin-top: 20px;
+    width: 100%;
+    background-color: #3366cc;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-weight: 700;
+    font-size: 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-apply:hover {
+    background-color: #254a99;
+}
+
+.catalog-main > label[for="sort"] {
+    font-weight: 600;
+    color: #004085;
+    margin-bottom: 6px;
+    display: inline-block;
+}
+
+#sort {
+    padding: 6px 10px;
+    font-size: 1em;
+    border-radius: 6px;
+    border: 1.5px solid #004085;
+    color: #004085;
+    background-color: white;
+    transition: border-color 0.3s ease;
+}
+
+#sort:hover, #sort:focus {
+    border-color: #0069d9;
+    outline: none;
+}
 
 a.btn-add { font-size: 1.8rem; text-decoration: none; }
 form button[title="Удалить"] { color: #dc3545; border: none; background: none; cursor: pointer; padding: 0; }
