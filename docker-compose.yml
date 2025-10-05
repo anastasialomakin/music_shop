@@ -12,7 +12,7 @@ services:
       - db_data:/app/instance
       - upload_data:/app/app/uploads    
     environment:
-      - FLASK_ENV=development
+      - FLASK_APP=main.py
 volumes:
   db_data:
   upload_data:
