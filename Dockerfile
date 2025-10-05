@@ -2,11 +2,17 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
+COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY ./app /app/
-COPY main.py .
+COPY ./app ./app
 
-CMD ["flask", "--app", "main", "run", "--host=0.0.0.0"]
+COPY main.py .
+COPY config.py .
+COPY .env .
+
+ENV FLASK_APP=main.py
+ENV FLASK_RUN_HOST=0.0.0.0
+
+CMD ["flask", "run"]
