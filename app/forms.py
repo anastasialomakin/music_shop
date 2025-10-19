@@ -105,3 +105,5 @@ class ReleaseForm(FlaskForm):
     band = SelectField('Группа', coerce=int, validators=[DataRequired()])
     compositions = SelectMultipleField('Треклист (композиции)', coerce=int)
     submit = SubmitField('Сохранить релиз')
+# class lab5(FlaskForm):
+#    title = StringField('randomChange', changes=[DataRequired()])
