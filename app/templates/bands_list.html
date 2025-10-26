@@ -2,25 +2,42 @@
 {% block content %}
 <div class="bands-list-container">
     <h2>Группы</h2>
-    <div class="search-sort-bar">
-         <input type="search" placeholder="Поиск по названию...">
-         <select><option>Сортировка (в разработке)</option></select>
-    </div>
-    <div class="band-list-header" style="display: flex; justify-content: space-between; padding: 0 20px; color: #777;">
+
+    <!-- Поиск и сортировка -->
+    <form method="get" action="{{ url_for('bands_list') }}" class="search-sort-bar" style="gap:10px;">
+        <input type="search" name="q" placeholder="Поиск по названию..." value="{{ search_query or '' }}" style="flex:1; padding:8px; border:1px solid #ddd; border-radius:5px;">
+        <select name="sort" style="padding:8px; border-radius:5px; border:1px solid #ddd;">
+            <option value="name_asc" {% if selected_sort == 'name_asc' %}selected{% endif %}>А → Я</option>
+            <option value="name_desc" {% if selected_sort == 'name_desc' %}selected{% endif %}>Я → А</option>
+        </select>
+        <button type="submit" style="padding:8px 12px; border-radius:5px; background:#007bff; color:white; border:none;">🔍</button>
+    </form>
+
+    <!-- Заголовки таблицы -->
+    <div class="band-list-header" style="display:flex; justify-content:space-between; padding:0 20px; color:#777; margin-top:10px;">
         <h4>Название группы</h4>
         <h4>Релизов в магазине</h4>
     </div>
+
+    <!-- Список групп -->
     {% for band in bands %}
-        <a href="{{ url_for('band_detail', id=band.id) }}" style="text-decoration: none; color: inherit;">
+        <a href="{{ url_for('band_detail', id=band.id) }}" style="text-decoration:none; color:inherit;">
             <div class="band-row">
                 <span class="band-row-name">{{ band.name }}</span>
                 <span class="band-row-count">{{ band.releases.count() }}</span>
             </div>
         </a>
     {% endfor %}
-</div>
-<!-- TODO: Пагинация -->
-<div class="pagination" style="margin-top: 20px; text-align: center;">
-    <p>(Пагинация в разработке)</p>
+
+    <!-- Пагинация -->
+    <div class="pagination" style="display:flex; justify-content:center; gap:5px; flex-wrap:wrap; margin-top:20px;">
+        {% for p in range(1, pagination.pages + 1) %}
+            {% if p == pagination.page %}
+                <span style="padding:8px 12px; background-color:#007bff; color:white; border-radius:4px; font-weight:bold; cursor:default;">{{ p }}</span>
+            {% else %}
+                <a href="{{ url_for('bands_list', page=p, q=search_query, sort=selected_sort) }}" style="padding:8px 12px; background-color:#e2e6ea; color:#333; border-radius:4px; text-decoration:none;">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

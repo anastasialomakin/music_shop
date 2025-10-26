@@ -1,24 +1,43 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ release.title }}</h1>
+
+{% if release.cover_image_url %}
+    <img src="{{ url_for('uploaded_file', filename=release.cover_image_url) }}" alt="Обложка релиза {{ release.title }}" style="max-width:250px; margin-bottom:20px;">
+{% endif %}
+
 <p>Группа: <a href="{{ url_for('band_detail', id=release.band.id) }}">{{ release.band.name }}</a></p>
 <p>Год: {{ release.release_year }}</p>
+
 <h3>Треклист</h3>
+{% if release.compositions %}
 <ul>
-{% for comp in release.compositions %}
-    <li>{{ comp.title }}</li>
-{% endfor %}
+    {% for comp in release.compositions %}
+        <li>{{ comp.title }}</li>
+    {% endfor %}
 </ul>
+{% else %}
+<p>Треклист отсутствует.</p>
+{% endif %}
+
 <hr>
 <h3>Издания в нашем магазине:</h3>
+{% if release.records.count() > 0 %}
 <div class="catalog-grid">
     {% for record in release.records %}
         <div class="record-card">
-             <a href="{{ url_for('record_detail', id=record.id) }}">
-                <p>{{ record.title }}</p>
+            <a href="{{ url_for('record_detail', id=record.id) }}">
+                {% if record.cover_image_url %}
+                    <img src="{{ url_for('uploaded_file', filename=record.cover_image_url) }}" alt="Обложка {{ record.title }}">
+                {% endif %}
+                <h4>{{ record.title }}</h4>
                 <p><strong>{{ record.price }}₽</strong></p>
-             </a>
+                <p>{% if record.stock_quantity > 0 %}В наличии{% else %}Нет в наличии{% endif %}</p>
+            </a>
         </div>
     {% endfor %}
 </div>
+{% else %}
+<p>Пластинок в наличии нет.</p>
+{% endif %}
 {% endblock %}

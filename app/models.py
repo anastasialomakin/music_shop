@@ -69,7 +69,7 @@ class Band(db.Model):
     name = db.Column(db.String(150), nullable=False)
     bio = db.Column(db.Text)
     genre_id = db.Column(db.Integer, db.ForeignKey('genres.id'))
-    
+    cover_image_url = db.Column(db.String(255))
     members = db.relationship('Artist', secondary=band_members, back_populates='bands')
     compositions = db.relationship('Composition', backref='author_band', lazy='dynamic')
     releases = db.relationship('Release', backref='band', lazy='dynamic')

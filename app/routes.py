@@ -6,6 +6,7 @@ from functools import wraps
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import Record, Release, Band, User, CustomerProfile, ManufacturerProfile, Order, OrderItem, Genre, Artist, Composition
 from app.forms import LoginForm, RegistrationForm, EditProfileForm, CheckoutForm, ManufacturerProfileForm, RecordForm, AdminEditUserForm, GenreForm, ArtistForm, BandForm, CompositionForm, ReleaseForm
+from sqlalchemy import or_
 
 # --- ДЕКОРАТОРЫ ДЛЯ РОЛЕЙ ---
 def manufacturer_required(f):
@@ -27,6 +28,22 @@ def admin_required(f):
 
 # --- ПУБЛИЧНЫЕ МАРШРУТЫ ---
 
+@app.route('/search_suggestions')
+def search_suggestions():
+    q = request.args.get('q', '').strip()
+    if not q:
+        return jsonify([])
+
+    results = Release.query.join(Band).filter(
+        or_(
+            Release.title.ilike(f'{q}%'),
+            Band.name.ilike(f'{q}%')
+        )
+    ).limit(5).all()
+
+    suggestions = [f"{r.title} ({r.band.name})" for r in results]
+    return jsonify(suggestions)
+
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
@@ -35,61 +52,112 @@ def uploaded_file(filename):
 @app.route('/index')
 def index():
     page = request.args.get('page', 1, type=int)
-    per_page = 20
+    selected_band = request.args.get('band', type=int)
+    selected_genre = request.args.get('genre', type=int)
+    selected_sort = request.args.get('sort', 'title_asc')
+    search_query = request.args.get('q', '').strip()
+    year_min = request.args.get('year_min', type=int)
+    year_max = request.args.get('year_max', type=int)
 
-    band_id = request.args.get('band', type=int)
-    available = request.args.get('available')
-    price_min = request.args.get('price_min', type=float)
-    price_max = request.args.get('price_max', type=float)
-    sort = request.args.get('sort', 'price_asc')
+    # базовый запрос
+    query = Release.query.join(Band).join(Genre)
 
-    query = Record.query
+    # фильтры
+    if selected_band:
+        query = query.filter(Release.band_id == selected_band)
+    if selected_genre:
+        query = query.filter(Band.genre_id == selected_genre)
+    if year_min is not None:
+        query = query.filter(Release.release_year >= year_min)
+    if year_max is not None:
+        query = query.filter(Release.release_year <= year_max)
 
-    if band_id:
-        query = query.join(Record.release).filter(Release.band_id == band_id)
+    # поиск
+    if search_query:
+        query = query.filter(
+            or_(
+                Release.title.ilike(f'%{search_query}%'),
+                Band.name.ilike(f'%{search_query}%')
+            )
+        )
 
-    if available == 'yes':
-        query = query.filter(Record.stock_quantity > 0)
-    elif available == 'no':
-        query = query.filter(Record.stock_quantity == 0)
+    # сортировка
+    if selected_sort == 'title_asc':
+        query = query.order_by(Release.title.asc())
+    elif selected_sort == 'title_desc':
+        query = query.order_by(Release.title.desc())
+    elif selected_sort == 'year_asc':
+        query = query.order_by(Release.release_year.asc())
+    elif selected_sort == 'year_desc':
+        query = query.order_by(Release.release_year.desc())
 
-    if price_min is not None:
-        query = query.filter(Record.price >= price_min)
-    if price_max is not None:
-        query = query.filter(Record.price <= price_max)
-
-    # Применяем сортировку
-    if sort == 'price_desc':
-        query = query.order_by(Record.price.desc())
-    else:
-        query = query.order_by(Record.price.asc())
-
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    records = pagination.items
+    # пагинация
+    pagination = query.paginate(page=page, per_page=20, error_out=False)
+    releases = pagination.items
 
     bands = Band.query.all()
+    genres = Genre.query.all()
 
-    return render_template('index.html', title='Каталог', records=records, pagination=pagination,
-                           bands=bands,
-                           selected_band=band_id,
-                           selected_available=available,
-                           price_min=price_min,
-                           price_max=price_max,
-                           selected_sort=sort)
+    # автоподсказки для текущего запроса
+    autocomplete_options = []
+    if search_query:
+        autocomplete_options = Release.query.join(Band).filter(
+            or_(
+                Release.title.ilike(f'{search_query}%'),
+                Band.name.ilike(f'{search_query}%')
+            )
+        ).limit(5).all()
+
+    return render_template(
+        'index.html',
+        releases=releases,
+        bands=bands,
+        genres=genres,
+        selected_band=selected_band,
+        selected_genre=selected_genre,
+        selected_sort=selected_sort,
+        search_query=search_query,
+        autocomplete_options=autocomplete_options,
+        pagination=pagination,
+        year_min=year_min,
+        year_max=year_max
+    )
 
 @app.route('/about')
 def about():
     return render_template('about.html', title='О нас')
 
-@app.route('/releases')
-def releases_list():
-    releases = Release.query.limit(20).all()
-    return render_template('releases_list.html', title='Релизы', releases=releases)
 
 @app.route('/bands')
 def bands_list():
-    bands = Band.query.limit(8).all()
-    return render_template('bands_list.html', title='Группы', bands=bands)
+    page = request.args.get('page', 1, type=int)
+    search_query = request.args.get('q', '').strip()
+    selected_sort = request.args.get('sort', 'name_asc')
+
+    # Базовый запрос
+    query = Band.query
+
+    # Поиск по названию
+    if search_query:
+        query = query.filter(Band.name.ilike(f'%{search_query}%'))
+
+    # Сортировка
+    if selected_sort == 'name_asc':
+        query = query.order_by(Band.name.asc())
+    elif selected_sort == 'name_desc':
+        query = query.order_by(Band.name.desc())
+
+    # Пагинация: 8 групп на страницу
+    pagination = query.paginate(page=page, per_page=8, error_out=False)
+    bands = pagination.items
+
+    return render_template(
+        'bands_list.html',
+        bands=bands,
+        search_query=search_query,
+        selected_sort=selected_sort,
+        pagination=pagination
+    )
 
 @app.route('/record/<int:id>')
 def record_detail(id):
@@ -190,12 +258,25 @@ def edit_profile():
 @app.route('/add_to_cart/<int:record_id>', methods=['POST'])
 @login_required
 def add_to_cart(record_id):
+    record = Record.query.get_or_404(record_id)
     cart = session.get('cart', {})
     record_id_str = str(record_id)
-    cart[record_id_str] = cart.get(record_id_str, 0) + 1
-    session['cart'] = cart
-    flash('Товар добавлен в корзину!')
+    qty_to_add = int(request.form.get('quantity', 1))
+    
+    # текущий кол-во в корзине
+    current_qty = cart.get(record_id_str, 0)
+    
+    # нельзя добавить больше, чем есть на складе
+    if current_qty + qty_to_add > record.stock_quantity:
+        flash(f'Нельзя добавить больше {record.stock_quantity} шт. в корзину.', 'warning')
+        qty_to_add = max(0, record.stock_quantity - current_qty)
+    
+    if qty_to_add > 0:
+        cart[record_id_str] = current_qty + qty_to_add
+        session['cart'] = cart
+        flash(f'{qty_to_add} шт. добавлено в корзину.', 'success')
     return redirect(request.referrer or url_for('index'))
+
 
 @app.route('/decrease_cart_item/<int:record_id>', methods=['POST'])
 @login_required
@@ -249,14 +330,24 @@ def cart():
 @app.route('/checkout', methods=['GET', 'POST'])
 @login_required
 def checkout():
+    # --- гарантируем, что у пользователя есть профиль ---
+    if not current_user.customer_profile:
+        profile = CustomerProfile(user_id=current_user.id, shipping_address="")
+        db.session.add(profile)
+        db.session.commit()
+
     form = CheckoutForm()
     cart_items_dict = session.get('cart', {})
+
     if not cart_items_dict:
         flash('Ваша корзина пуста, невозможно оформить заказ.')
         return redirect(url_for('cart'))
-    record_ids = [int(id) for id in cart_items_dict.keys()]
+
+    record_ids = [int(x) for x in cart_items_dict.keys()]
     records = Record.query.filter(Record.id.in_(record_ids)).all()
+
     total_amount = sum(rec.price * cart_items_dict[str(rec.id)] for rec in records)
+
     if form.validate_on_submit():
         new_order = Order(
             user_id=current_user.id,
@@ -265,23 +356,42 @@ def checkout():
             payment_method=form.payment_method.data
         )
         db.session.add(new_order)
-        for record in records:
-            quantity = cart_items_dict[str(record.id)]
-            order_item = OrderItem(
+
+        for rec in records:
+            qty = cart_items_dict[str(rec.id)]
+
+            # уменьшаем склад
+            rec.stock_quantity -= qty
+
+            # создаём позиции заказа
+            db.session.add(OrderItem(
                 order=new_order,
-                record_id=record.id,
-                quantity=quantity,
-                price_at_purchase=record.price
-            )
-            db.session.add(order_item)
+                record_id=rec.id,
+                quantity=qty,
+                price_at_purchase=rec.price
+            ))
+
+        # обновляем адрес доставки
         current_user.customer_profile.shipping_address = form.shipping_address.data
+
         db.session.commit()
         session['cart'] = {}
         flash('Ваш заказ успешно оформлен!')
         return redirect(url_for('orders_list'))
-    elif request.method == 'GET':
+
+    # подставляем адрес при открытии страницы
+    if request.method == 'GET':
         form.shipping_address.data = current_user.customer_profile.shipping_address
-    return render_template('checkout.html', title='Оформление заказа', form=form, total=total_amount, items=records, cart=cart_items_dict)
+
+    return render_template(
+        'checkout.html',
+        title='Оформление заказа',
+        form=form,
+        total=total_amount,
+        items=records,
+        cart=cart_items_dict
+    )
+
 
 @app.route('/orders')
 @login_required
@@ -400,14 +510,53 @@ def sales_report():
     return render_template('sales_report.html', title='Отчет о продажах', total_sold=total_sold, total_revenue=total_revenue)
 
 
+@app.route('/top_selling')
+def top_selling():
+    max_stock = 50  # если это фикс
+    records = Record.query.all()
+
+    # посчитаем "сколько продано" на лету
+    enriched = []
+    for r in records:
+        sold = max_stock - r.stock_quantity
+        revenue = sold * float(r.price)
+        enriched.append((r, sold, revenue))
+
+    # сортировка: по sold убыв
+    enriched.sort(key=lambda x: x[1], reverse=True)
+
+    # возьмём топ-10
+    enriched = enriched[:10]
+
+    return render_template('top_selling.html', records=enriched)
+
+
 # --- АДМИН-ПАНЕЛЬ ---
+
+def get_admin_paginated(Model, per_page=15):
+    page = request.args.get('page', 1, type=int)
+    pagination = Model.query.order_by(Model.id).paginate(page=page, per_page=per_page)
+    return pagination
+
+
 
 @app.route('/admin/dashboard')
 @login_required
 @admin_required
 def admin_dashboard():
-    # TODO: В Фазе 5 добавим сюда подсчет реальных данных
-    return render_template('admin_dashboard.html', title='Админ-панель')
+    total_users = User.query.count()
+    total_records = db.session.query(db.func.sum(Record.stock_quantity)).scalar() or 0
+    total_orders = Order.query.count()
+
+    return render_template(
+        'admin_dashboard.html',
+        title='Админ-панель',
+        total_users=total_users,
+        total_records=total_records,
+        total_orders=total_orders
+    )
+
+
 
 @app.route('/admin/users')
 @login_required
