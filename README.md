@@ -13,6 +13,6 @@
 
 ### Логины
 
-1) admin: 12345
-2) emi_records: 12345 (лейбл)
+1) admin: admin123
+2) manufacturer1: password (лейбл)
 3) user_test: 12345
