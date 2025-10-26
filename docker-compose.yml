@@ -10,7 +10,7 @@ services:
     volumes:
       - .:/app
       - db_data:/app/instance
-      - upload_data:/app/app/uploads    
+      - ./app/uploads:/app/app/uploads   
     environment:
       - FLASK_APP=main.py
 volumes:
