@@ -1,6 +1,7 @@
 {% extends "admin_base.html" %}
 {% block admin_content %}
     <h3>Управление пользователями</h3>
+
     <table class="admin-table">
         <thead>
             <tr>
@@ -29,4 +30,20 @@
         {% endfor %}
         </tbody>
     </table>
+
+
+    {% if pagination.pages > 1 %}
+    <div class="pagination" style="margin-top:20px; display:flex; gap:15px; align-items:center;">
+        {% if pagination.has_prev %}
+            <a href="{{ url_for('admin_users', page=pagination.prev_num) }}">&laquo; Назад</a>
+        {% endif %}
+
+        <span>Стр. {{ pagination.page }} из {{ pagination.pages }}</span>
+
+        {% if pagination.has_next %}
+            <a href="{{ url_for('admin_users', page=pagination.next_num) }}">Вперёд &raquo;</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
 {% endblock %}

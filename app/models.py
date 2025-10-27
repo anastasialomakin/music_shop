@@ -55,7 +55,9 @@ class ManufacturerProfile(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
     company_name = db.Column(db.String(150), nullable=False)
     company_address = db.Column(db.String(255))
-    records = db.relationship('Record', backref='manufacturer', lazy='dynamic')
+    records = db.relationship(
+        'Record', back_populates='manufacturer_profile', lazy='dynamic'
+    )
 
 class Genre(db.Model):
     __tablename__ = 'genres'
@@ -111,6 +113,9 @@ class Record(db.Model):
     record_type = db.Column(db.String(45))
     release_id = db.Column(db.Integer, db.ForeignKey('releases.id'), nullable=False)
     manufacturer_profile_id = db.Column(db.Integer, db.ForeignKey('manufacturer_profiles.id'), nullable=False)
+    manufacturer_profile = db.relationship(
+        'ManufacturerProfile', back_populates='records'
+    )
 
 class Order(db.Model):
     __tablename__ = 'orders'
@@ -120,6 +125,8 @@ class Order(db.Model):
     total_amount = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String(50), nullable=False)
     payment_method = db.Column(db.String(50))
+    shipping_address = db.Column(db.Text)  # <-- вот это добавляем
+    comment = db.Column(db.Text)  # если хочешь хранить комментарий к заказу
     items = db.relationship('OrderItem', backref='order', lazy='dynamic', cascade="all, delete-orphan")
 
 class OrderItem(db.Model):

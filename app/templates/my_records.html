@@ -2,7 +2,7 @@
 {% block profile_content %}
     <div style="display: flex; justify-content: space-between; align-items: center;">
         <h3>Мои пластинки</h3>
-        <a href="{{ url_for('add_record') }}" title="Добавить новую пластинку" style="font-size: 1.8rem;">
+        <a href="{{ url_for('manuf_add_record') }}" title="Добавить новую пластинку" style="font-size: 1.8rem;">
             <i class="bi bi-plus-circle-fill"></i>
         </a>
     </div>
@@ -17,7 +17,7 @@
                 <td>{{ record.stock_quantity }} шт.</td>
                 <td class="actions">
                     <a href="{{ url_for('record_detail', id=record.id) }}" title="Просмотр"><i class="bi bi-eye"></i></a>
-                    <a href="{{ url_for('edit_record', record_id=record.id) }}" title="Редактировать"><i class="bi bi-pencil-square"></i></a>
+                    <a href="{{ url_for('manuf_edit_record', record_id=record.id) }}" title="Редактировать"><i class="bi bi-pencil-square"></i></a>
                     <form action="{{ url_for('delete_record', record_id=record.id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Вы уверены?');">
                         <button type="submit" title="Удалить" style="color: red; border: none; background: none; cursor: pointer; padding: 0;"><i class="bi bi-trash"></i></button>
                     </form>

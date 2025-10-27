@@ -1,11 +1,11 @@
 import os
 from app import app, db
 from werkzeug.utils import secure_filename
-from flask import render_template, flash, redirect, url_for, session, request, abort, send_from_directory, jsonify
+from flask import render_template, flash, redirect, url_for, session, request, abort, send_from_directory, jsonify, current_app
 from functools import wraps
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import Record, Release, Band, User, CustomerProfile, ManufacturerProfile, Order, OrderItem, Genre, Artist, Composition
-from app.forms import LoginForm, RegistrationForm, EditProfileForm, CheckoutForm, ManufacturerProfileForm, RecordForm, AdminEditUserForm, GenreForm, ArtistForm, BandForm, CompositionForm, ReleaseForm
+from app.forms import LoginForm, RegistrationForm, EditProfileForm, CheckoutForm, ManufacturerProfileForm, RecordForm, AdminEditUserForm, GenreForm, ArtistForm, BandForm, CompositionForm, ReleaseForm, AdminOrderForm
 from sqlalchemy import or_
 
 # --- ДЕКОРАТОРЫ ДЛЯ РОЛЕЙ ---
@@ -416,76 +416,89 @@ def my_records():
     records = current_user.manufacturer_profile.records.all()
     return render_template('my_records.html', title='Мои пластинки', records=records)
 
-
+# ------------------- ДОБАВЛЕНИЕ -------------------
 @app.route('/my-records/add', methods=['GET', 'POST'])
 @login_required
 @manufacturer_required
-def add_record():
+def manuf_add_record():
+    print("REQUEST METHOD:", request.method)
+    print("FORM DATA:", request.form)
+    print("FILES:", request.files)
+
     form = RecordForm()
-    form.release.choices = [(r.id, f"{r.band.name} - {r.title} ({r.release_year})") for r in Release.query.order_by(Release.title).all()]
+    form.release.choices = [(r.id, r.title) for r in Release.query.order_by(Release.title).all()]
+    form.manufacturer_profile.choices = [
+        (current_user.manufacturer_profile.id, current_user.manufacturer_profile.company_name)
+    ]  # всегда текущий пользователь
 
     if form.validate_on_submit():
+        print("Form validated")
         filename = None
         if form.cover_image.data:
-            f = form.cover_image.data
-            filename = secure_filename(f.filename)
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            file = form.cover_image.data
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
 
         new_record = Record(
             title=form.title.data,
-            release_id=form.release.data,
             release_year=form.release_year.data,
             price=form.price.data,
             stock_quantity=form.stock_quantity.data,
             record_type=form.record_type.data,
             description=form.description.data,
+            release_id=form.release.data,
             cover_image_url=filename,
             manufacturer_profile_id=current_user.manufacturer_profile.id
         )
         db.session.add(new_record)
         db.session.commit()
-        flash('Новая пластинка успешно добавлена!')
+        flash('Пластинка успешно добавлена.', 'success')
         return redirect(url_for('my_records'))
-        
+    else:
+        print("Form errors:", form.errors)
+        print("Request method:", request.method)
+
     return render_template('record_form.html', title='Добавить пластинку', form=form)
 
-
+# ------------------- РЕДАКТИРОВАНИЕ -------------------
 @app.route('/my-records/edit/<int:record_id>', methods=['GET', 'POST'])
 @login_required
 @manufacturer_required
-def edit_record(record_id):
+def manuf_edit_record(record_id):
     record = Record.query.get_or_404(record_id)
     if record.manufacturer_profile_id != current_user.manufacturer_profile.id:
         abort(403)
-        
+
     form = RecordForm(obj=record)
-    form.release.choices = [(r.id, f"{r.band.name} - {r.title} ({r.release_year})") for r in Release.query.order_by(Release.title).all()]
-    
+    form.release.choices = [(r.id, r.title) for r in Release.query.order_by(Release.title).all()]
+    form.manufacturer_profile.choices = [
+        (current_user.manufacturer_profile.id, current_user.manufacturer_profile.company_name)
+    ]
+
     if form.validate_on_submit():
         record.title = form.title.data
-        record.release_id = form.release.data
         record.release_year = form.release_year.data
         record.price = form.price.data
         record.stock_quantity = form.stock_quantity.data
         record.record_type = form.record_type.data
         record.description = form.description.data
-        
+        record.release_id = form.release.data
+
         if form.cover_image.data:
-            f = form.cover_image.data
-            filename = secure_filename(f.filename)
-            # TODO: Удалить старый файл обложки, если он есть и отличается
-            f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            file = form.cover_image.data
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
             record.cover_image_url = filename
 
         db.session.commit()
-        flash('Данные о пластинке обновлены.')
+        flash('Данные пластинки успешно обновлены.', 'success')
         return redirect(url_for('my_records'))
-        
-    elif request.method == 'GET':
-        form.release.data = record.release_id
 
+    form.release.data = record.release_id
+    form.manufacturer_profile.data = current_user.manufacturer_profile.id
     return render_template('record_form.html', title='Редактировать пластинку', form=form)
 
+# ------------------- УДАЛЕНИЕ -------------------
 @app.route('/my-records/delete/<int:record_id>', methods=['POST'])
 @login_required
 @manufacturer_required
@@ -495,7 +508,7 @@ def delete_record(record_id):
         abort(403)
     db.session.delete(record)
     db.session.commit()
-    flash('Пластинка была удалена.')
+    flash('Пластинка была удалена.', 'success')
     return redirect(url_for('my_records'))
 
 @app.route('/sales-report')
@@ -504,10 +517,17 @@ def delete_record(record_id):
 def sales_report():
     total_sold = 0
     total_revenue = 0
+
     for record in current_user.manufacturer_profile.records:
-        total_sold += 1
-        total_revenue += record.price
-    return render_template('sales_report.html', title='Отчет о продажах', total_sold=total_sold, total_revenue=total_revenue)
+        total_sold += 50 - record.stock_quantity
+        total_revenue += total_sold * record.price
+
+    return render_template(
+        'sales_report.html',
+        title='Отчет о продажах',
+        total_sold=total_sold,
+        total_revenue=total_revenue
+    )
 
 
 @app.route('/top_selling')
@@ -533,12 +553,6 @@ def top_selling():
 
 # --- АДМИН-ПАНЕЛЬ ---
 
-def get_admin_paginated(Model, per_page=15):
-    page = request.args.get('page', 1, type=int)
-    pagination = Model.query.order_by(Model.id).paginate(page=page, per_page=per_page)
-    return pagination
-
-
 
 @app.route('/admin/dashboard')
 @login_required
@@ -562,8 +576,18 @@ def admin_dashboard():
 @login_required
 @admin_required
 def admin_users():
-    users = User.query.order_by(User.id).all()
-    return render_template('admin/users_list.html', title='Управление пользователями', users=users)
+    page = request.args.get('page', 1, type=int)
+
+    per_page = 15
+    pagination = User.query.order_by(User.id.asc()).paginate(page=page, per_page=per_page)
+
+    return render_template(
+        'admin/users_list.html',
+        title='Управление пользователями',
+        users=pagination.items,       # <-- как раньше, просто список
+        pagination=pagination         # <-- объект для кнопок страниц
+    )
+
 
 @app.route('/admin/user/<int:user_id>')
 @login_required
@@ -593,8 +617,8 @@ def admin_edit_user(user_id):
             # Если стал производителем
             if user.role == 'manufacturer':
                 if user.customer_profile: db.session.delete(user.customer_profile)
-                if not user.manufacturer_profile:
-                    user.manufacturer_profile = ManufacturerProfile(company_name=f"Компания {user.username}")
+                if not user.manufacturer_profile_id:
+                    user.manufacturer_profile_ = ManufacturerProfile(company_name=f"Компания {user.username}")
             # Если стал покупателем
             elif user.role == 'user':
                 if user.manufacturer_profile: db.session.delete(user.manufacturer_profile)
@@ -633,8 +657,14 @@ def admin_delete_user(user_id):
 @login_required
 @admin_required
 def admin_genres():
-    genres = Genre.query.order_by('name').all()
-    return render_template('admin/genres_list.html', genres=genres)
+    page = request.args.get('page', 1, type=int)
+    pagination = Genre.query.order_by(Genre.name).paginate(page=page, per_page=15)
+    return render_template(
+        'admin/genres_list.html',
+        genres=pagination.items,
+        pagination=pagination
+    )
+
 
 @app.route('/admin/genre/add', methods=['GET', 'POST'])
 @login_required
@@ -678,8 +708,14 @@ def admin_delete_genre(genre_id):
 @login_required
 @admin_required
 def admin_artists():
-    artists = Artist.query.order_by('name').all()
-    return render_template('admin/artists_list.html', artists=artists)
+    page = request.args.get('page', 1, type=int)
+    pagination = Artist.query.order_by(Artist.name).paginate(page=page, per_page=15)
+    return render_template(
+        'admin/artists_list.html',
+        artists=pagination.items,
+        pagination=pagination
+    )
+
 
 @app.route('/admin/artist/add', methods=['GET', 'POST'])
 @login_required
@@ -725,21 +761,38 @@ def admin_delete_artist(artist_id):
 @login_required
 @admin_required
 def admin_bands():
-    bands = Band.query.order_by('name').all()
-    return render_template('admin/bands_list.html', bands=bands)
+    page = request.args.get('page', 1, type=int)
+    pagination = Band.query.order_by(Band.name).paginate(page=page, per_page=15)
+
+    return render_template(
+        'admin/bands_list.html',
+        bands=pagination.items,
+        pagination=pagination
+    )
+
 
 @app.route('/admin/band/add', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def admin_add_band():
     form = BandForm()
-    # Загружаем списки для полей выбора
     form.genre.choices = [(g.id, g.name) for g in Genre.query.order_by('name').all()]
     form.members.choices = [(a.id, a.name) for a in Artist.query.order_by('name').all()]
 
     if form.validate_on_submit():
-        new_band = Band(name=form.name.data, bio=form.bio.data, genre_id=form.genre.data)
-        # Находим объекты артистов по их id и добавляем в группу
+        filename = None
+        if form.cover_image.data:
+            file = form.cover_image.data
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+
+        new_band = Band(
+            name=form.name.data,
+            bio=form.bio.data,
+            genre_id=form.genre.data,
+            cover_image_url=filename
+        )
+
         selected_members = Artist.query.filter(Artist.id.in_(form.members.data)).all()
         new_band.members = selected_members
         
@@ -747,7 +800,9 @@ def admin_add_band():
         db.session.commit()
         flash('Группа успешно добавлена.')
         return redirect(url_for('admin_bands'))
+
     return render_template('admin/band_form.html', title='Добавить группу', form=form)
+
 
 @app.route('/admin/band/edit/<int:band_id>', methods=['GET', 'POST'])
 @login_required
@@ -762,8 +817,15 @@ def admin_edit_band(band_id):
         band.name = form.name.data
         band.bio = form.bio.data
         band.genre_id = form.genre.data
+
         selected_members = Artist.query.filter(Artist.id.in_(form.members.data)).all()
         band.members = selected_members
+
+        if form.cover_image.data:
+            file = form.cover_image.data
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            band.cover_image_url = filename
         
         db.session.commit()
         flash('Данные группы успешно обновлены.')
@@ -774,6 +836,7 @@ def admin_edit_band(band_id):
         form.members.data = [member.id for member in band.members]
 
     return render_template('admin/band_form.html', title='Редактировать группу', form=form)
+
 
 @app.route('/admin/band/delete/<int:band_id>', methods=['POST'])
 @login_required
@@ -792,8 +855,15 @@ def admin_delete_band(band_id):
 @login_required
 @admin_required
 def admin_compositions():
-    compositions = Composition.query.order_by('title').all()
-    return render_template('admin/compositions_list.html', compositions=compositions)
+    page = request.args.get('page', 1, type=int)
+    pagination = Composition.query.order_by(Composition.id).paginate(page=page, per_page=15)
+
+    return render_template(
+        'admin/compositions_list.html',
+        compositions=pagination.items,
+        pagination=pagination
+    )
+
 
 @app.route('/admin/composition/add', methods=['GET', 'POST'])
 @login_required
@@ -852,17 +922,24 @@ def admin_delete_composition(composition_id):
 @login_required
 @admin_required
 def admin_releases():
-    releases = Release.query.order_by('title').all()
-    return render_template('admin/releases_list.html', releases=releases)
+    page = request.args.get('page', 1, type=int)
+    pagination = Release.query.order_by(Release.id).paginate(page=page, per_page=15)
+    return render_template(
+        'admin/releases_list.html',
+        releases=pagination.items,
+        pagination=pagination
+    )
+
 
 @app.route('/admin/release/add', methods=['GET', 'POST'])
 @login_required
 @admin_required
 def admin_add_release():
     form = ReleaseForm()
-    # Загружаем только список групп. Список композиций будет пуст.
-    form.band.choices = [(b.id, b.name) for b in Band.query.order_by('name').all()]
-    form.compositions.choices = []
+    # Список групп
+    form.band.choices = [(b.id, b.name) for b in Band.query.order_by(Band.name).all()]
+    # Если группа выбрана (POST), подгружаем композиции
+    form.compositions.choices = [(c.id, c.title) for c in Composition.query.filter_by(author_band_id=form.band.data).all()] if form.band.data else []
 
     if form.validate_on_submit():
         new_release = Release(
@@ -870,15 +947,25 @@ def admin_add_release():
             release_year=form.release_year.data,
             band_id=form.band.data
         )
+
+        # Картинка
+        if form.cover_image.data:
+            file = form.cover_image.data
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            new_release.cover_image_url = f'/uploads/{filename}'
+
+        # Треки
         selected_compositions = Composition.query.filter(Composition.id.in_(form.compositions.data)).all()
         new_release.compositions = selected_compositions
-        
+
         db.session.add(new_release)
         db.session.commit()
         flash('Релиз успешно добавлен.')
         return redirect(url_for('admin_releases'))
-        
+
     return render_template('admin/release_form.html', title='Добавить релиз', form=form)
+
 
 @app.route('/admin/release/edit/<int:release_id>', methods=['GET', 'POST'])
 @login_required
@@ -886,21 +973,28 @@ def admin_add_release():
 def admin_edit_release(release_id):
     release = Release.query.get_or_404(release_id)
     form = ReleaseForm(obj=release)
-    form.band.choices = [(b.id, b.name) for b in Band.query.order_by('name').all()]
-    # При редактировании сразу загружаем композиции ВЫБРАННОЙ группы
+    form.band.choices = [(b.id, b.name) for b in Band.query.order_by(Band.name).all()]
     form.compositions.choices = [(c.id, c.title) for c in release.band.compositions]
 
     if form.validate_on_submit():
+        # Обновляем поля существующего релиза
         release.title = form.title.data
         release.release_year = form.release_year.data
         release.band_id = form.band.data
+
+        if form.cover_image.data:
+            file = form.cover_image.data
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            release.cover_image_url = f'{filename}'
+
         selected_compositions = Composition.query.filter(Composition.id.in_(form.compositions.data)).all()
         release.compositions = selected_compositions
-        
+
         db.session.commit()
-        flash('Данные релиза обновлены.')
+        flash('Релиз успешно обновлён.')
         return redirect(url_for('admin_releases'))
-        
+
     elif request.method == 'GET':
         form.band.data = release.band_id
         form.compositions.data = [c.id for c in release.compositions]
@@ -916,6 +1010,163 @@ def admin_delete_release(release_id):
     db.session.commit()
     flash('Релиз удален.')
     return redirect(url_for('admin_releases'))
+
+# --- СПИСОК ПЛАСТИНОК ---
+@app.route('/admin/records')
+@login_required
+@admin_required
+def admin_records():
+    page = request.args.get('page', 1, type=int)
+    pagination = Record.query.order_by(Record.id).paginate(page=page, per_page=15)
+    return render_template(
+        'admin/records_list.html',
+        records=pagination.items,
+        pagination=pagination
+    )
+
+@app.route('/admin/record/add', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_add_record():
+    form = RecordForm()
+    form.release.choices = [(r.id, r.title) for r in Release.query.order_by(Release.title).all()]
+    form.manufacturer_profile.choices = [
+        (m.id, m.company_name) for m in ManufacturerProfile.query.order_by(ManufacturerProfile.company_name).all()
+    ]
+
+    if form.validate_on_submit():
+        filename = None
+        if form.cover_image.data:
+            file = form.cover_image.data
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+
+        new_record = Record(
+            title=form.title.data,
+            release_year=form.release_year.data,
+            price=form.price.data,
+            stock_quantity=form.stock_quantity.data,
+            record_type=form.record_type.data,
+            description=form.description.data,
+            release_id=form.release.data,
+            manufacturer_profile_id=form.manufacturer_profile.data,
+            cover_image_url=filename
+        )
+        db.session.add(new_record)
+        db.session.commit()
+        flash('Пластинка успешно добавлена.')
+        return redirect(url_for('admin_records'))
+
+    return render_template('admin/record_form.html', title='Добавить пластинку', form=form)
+
+
+@app.route('/admin/record/edit/<int:record_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_edit_record(record_id):
+    record = Record.query.get_or_404(record_id)
+    form = RecordForm(obj=record)
+    form.release.choices = [(r.id, r.title) for r in Release.query.order_by(Release.title).all()]
+    form.manufacturer_profile.choices = [
+        (m.id, m.company_name) for m in ManufacturerProfile.query.order_by(ManufacturerProfile.company_name).all()
+    ]
+
+    if form.validate_on_submit():
+        record.title = form.title.data
+        record.release_year = form.release_year.data
+        record.price = form.price.data
+        record.stock_quantity = form.stock_quantity.data
+        record.record_type = form.record_type.data
+        record.description = form.description.data
+        record.release_id = form.release.data
+        record.manufacturer_profile_id = form.manufacturer_profile.data
+
+        if form.cover_image.data:
+            file = form.cover_image.data
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
+            record.cover_image_url = filename
+
+        db.session.commit()
+        flash('Данные пластинки успешно обновлены.')
+        return redirect(url_for('admin_records'))
+
+    # Предзаполнение select-полей при GET
+    form.release.data = record.release_id
+    form.manufacturer_profile.data = record.manufacturer_profile_id
+    return render_template('admin/record_form.html', title='Редактировать пластинку', form=form)
+
+
+# --- УДАЛИТЬ ПЛАСТИНКУ ---
+@app.route('/admin/record/delete/<int:record_id>', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_record(record_id):
+    record = Record.query.get_or_404(record_id)
+    db.session.delete(record)
+    db.session.commit()
+    flash('Пластинка удалена.')
+    return redirect(url_for('admin_records'))
+
+# app/routes.py
+@app.route('/admin/orders')
+@login_required
+@admin_required
+def admin_orders():
+    page = request.args.get('page', 1, type=int)
+    q = request.args.get('q', '', type=str)
+
+    orders_query = Order.query.order_by(Order.order_date.desc())
+
+    if q:
+        # Можно фильтровать по ID или имени пользователя
+        orders_query = orders_query.join(User).filter(
+            db.or_(
+                Order.id.ilike(f"%{q}%"),
+                User.username.ilike(f"%{q}%")
+            )
+        )
+
+    pagination = orders_query.paginate(page=page, per_page=15)
+    orders = pagination.items
+
+    return render_template('admin/orders_list.html', orders=orders, pagination=pagination, q=q)
+
+@app.route('/admin/order/edit/<int:order_id>', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_edit_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    form = AdminOrderForm(obj=order)
+
+    if form.validate_on_submit():
+        order.status = form.status.data
+        order.shipping_address = form.shipping_address.data
+        order.payment_method = form.payment_method.data
+        order.comment = form.comment.data
+
+        db.session.commit()
+        flash('Заказ успешно обновлён.')
+        return redirect(url_for('admin_orders'))
+
+    # Предзаполнение select-полей при GET
+    elif request.method == 'GET':
+        form.status.data = order.status
+        form.shipping_address.data = order.shipping_address
+        form.payment_method.data = order.payment_method
+        form.comment.data = order.comment
+
+    return render_template('admin/order_form.html', title=f'Редактировать заказ #{order.id}', form=form, order=order)
+
+@app.route('/admin/order/delete/<int:order_id>', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    db.session.delete(order)
+    db.session.commit()
+    flash('Заказ удалён.')
+    return redirect(url_for('admin_orders'))
 
 
 # --- API-маршрут для JavaScript ---

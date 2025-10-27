@@ -11,12 +11,12 @@
         <div class="stat-card" style="flex: 1; background: #fff; padding: 20px; border-radius: 8px; text-align: center;">
             <h4>Всего пластинок</h4>
             <p style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">{{ total_records }}</p>
-            <a href="#">Управлять</a>
+            <a href="{{ url_for('admin_records') }}">Управлять</a>
         </div>
         <div class="stat-card" style="flex: 1; background: #fff; padding: 20px; border-radius: 8px; text-align: center;">
             <h4>Всего заказов</h4>
             <p style="font-size: 2.5em; font-weight: bold; margin: 10px 0;">{{ total_orders }}</p>
-            <a href="#">Управлять</a>
+            <a href="{{ url_for('admin_orders') }}">Управлять</a>
         </div>
     </div>
 {% endblock %}

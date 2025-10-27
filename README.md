@@ -14,5 +14,7 @@
 ### Логины
 
 1) admin: admin123
-2) manufacturer1: password (лейбл)
-3) user_test: 12345
+2) manufacturer1: password
+   manufacturer2: password 
+   manufacturer3: password 
+3) user1: password
