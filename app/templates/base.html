@@ -16,8 +16,8 @@
             <nav class="header-center">
                 <a href="{{ url_for('about') }}">О нас</a>
                 <a href="{{ url_for('index') }}">Каталог</a>
-                <a href="{{ url_for('releases_list') }}">Релизы</a>
                 <a href="{{ url_for('bands_list') }}">Группы</a>
+                <a href="{{ url_for('top_selling') }}">Топ продаж</a>
                 {% if current_user.is_authenticated %}
                     {% if current_user.role == 'admin' %}
                         <a href="{{ url_for('admin_dashboard') }}">Админ-панель</a>

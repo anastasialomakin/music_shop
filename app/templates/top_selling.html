@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Топ продаваемых пластинок</h1>
+
+{% if records %}
+<table style="width:100%; border-collapse:collapse; margin-top:20px;">
+    <thead>
+        <tr>
+            <th style="text-align:left; padding:8px;">Пластинка</th>
+            <th style="text-align:right; padding:8px;">Продано</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for rec, sold, revenue in records %}
+        <tr style="border-top:1px solid #ddd;">
+            <td style="padding:8px;">
+                <a href="{{ url_for('record_detail', id=rec.id) }}">
+                    {{ rec.title }}
+                </a>
+            </td>
+            <td style="text-align:right; padding:8px;">{{ sold }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Нет данных о продажах.</p>
+{% endif %}
+{% endblock %}

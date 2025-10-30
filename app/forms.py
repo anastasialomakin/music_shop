@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SubmitField, PasswordField, BooleanField, IntegerField, DecimalField, SelectField, FileField, SelectMultipleField, TimeField
-from wtforms.validators import DataRequired, EqualTo, Optional, ValidationError
+from wtforms.validators import DataRequired, EqualTo, Optional, ValidationError, NumberRange
 from app.models import User, Release, UserMixin
 from flask_login import current_user
 from flask_wtf.file import FileAllowed
@@ -56,18 +56,18 @@ class ManufacturerProfileForm(FlaskForm):
 
 class RecordForm(FlaskForm):
     title = StringField('Название издания', validators=[DataRequired()])
-
     release = SelectField('Релиз', coerce=int, validators=[DataRequired()])
+    manufacturer_profile = SelectField('Производитель', coerce=int, validators=[DataRequired()])
     release_year = IntegerField('Год этого издания', validators=[Optional()])
     price = DecimalField('Цена (в рублях)', validators=[DataRequired()])
     stock_quantity = IntegerField('Количество на складе', validators=[DataRequired()])
     record_type = StringField('Тип записи (LP, EP, 7" и т.д.)')
     description = TextAreaField('Описание издания')
-
     cover_image = FileField('Обложка (изображение)', validators=[
         FileAllowed(['jpg', 'jpeg', 'png'], 'Только изображения!')
     ])
     submit = SubmitField('Сохранить пластинку')
+
 
 class AdminEditUserForm(EditProfileForm):
     role = SelectField('Роль', choices=[
@@ -91,6 +91,7 @@ class BandForm(FlaskForm):
     bio = TextAreaField('Биография')
     genre = SelectField('Жанр', coerce=int, validators=[Optional()])
     members = SelectMultipleField('Участники', coerce=int)
+    cover_image = FileField('Картинка', validators=[FileAllowed(['jpg', 'png', 'jpeg'], 'Только изображения!')])
     submit = SubmitField('Сохранить')
 
 class CompositionForm(FlaskForm):
@@ -99,11 +100,24 @@ class CompositionForm(FlaskForm):
     duration = IntegerField('Длительность (в секундах)', validators=[Optional()])
     submit = SubmitField('Сохранить')
 
+
 class ReleaseForm(FlaskForm):
-    title = StringField('Название релиза', validators=[DataRequired()])
-    release_year = IntegerField('Год релиза', validators=[Optional()])
+    title = StringField('Название', validators=[DataRequired()])
+    release_year = IntegerField('Год выпуска', validators=[DataRequired(), NumberRange(min=1900, max=2100)])
     band = SelectField('Группа', coerce=int, validators=[DataRequired()])
-    compositions = SelectMultipleField('Треклист (композиции)', coerce=int)
-    submit = SubmitField('Сохранить релиз')
-# class lab5(FlaskForm):
-#    title = StringField('randomChange', changes=[DataRequired()])
+    compositions = SelectMultipleField('Композиции', coerce=int, validators=[Optional()])
+    cover_image = FileField('Обложка', validators=[Optional()])
+    submit = SubmitField('Сохранить')
+
+class AdminOrderForm(FlaskForm):
+    status = SelectField('Статус', choices=[
+        ('pending', 'В ожидании'),
+        ('paid', 'Оплачен'),
+        ('shipped', 'Отправлен'),
+        ('completed', 'Завершён'),
+        ('cancelled', 'Отменён')
+    ], validators=[DataRequired()])
+    shipping_address = TextAreaField('Адрес доставки', validators=[DataRequired()])
+    payment_method = SelectField('Способ оплаты', choices=[('Card', 'Картой онлайн'), ('Cash', 'Наличными при получении')], validators=[DataRequired()])
+    comment = TextAreaField('Комментарий к заказу')
+    submit = SubmitField('Сохранить')

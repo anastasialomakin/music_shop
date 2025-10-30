@@ -1,15 +1,58 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ record.title }}</h1>
-<img src="{{ url_for('uploaded_file', filename=record.cover_image_url) if record.cover_image_url else 'https://via.placeholder.com/200' }}" alt="Обложка">
-<p>Группа: <a href="{{ url_for('band_detail', id=record.release.band.id) }}">{{ record.release.band.name }}</a></p>
-<p>Релиз: <a href="{{ url_for('release_detail', id=record.release.id) }}">{{ record.release.title }} ({{ record.release.release_year }})</a></p>
-<p>Производитель: {{ record.manufacturer.company_name }}</p>
+
+{% if record.cover_image_url %}
+    <img src="{{ url_for('uploaded_file', filename=record.cover_image_url) }}" alt="Обложка {{ record.title }}" style="max-width:250px; margin-bottom:20px;">
+{% else %}
+    <img src="https://via.placeholder.com/250" alt="Нет обложки" style="max-width:250px; margin-bottom:20px;">
+{% endif %}
+
+<p>Группа: 
+    <a href="{{ url_for('band_detail', id=record.release.band.id) }}">
+        {{ record.release.band.name }}
+    </a>
+</p>
+
+<p>Релиз: 
+    <a href="{{ url_for('release_detail', id=record.release.id) }}">
+        {{ record.release.title }} ({{ record.release.release_year }})
+    </a>
+</p>
+
+<p>Производитель: 
+    {% if record.manufacturer_profile %}
+        {{ record.manufacturer_profile.company_name }}
+    {% else %}
+        Не указан
+    {% endif %}
+</p>
+
 <p>Цена: {{ record.price }}₽</p>
+<p>В наличии: {{ record.stock_quantity }} шт.</p>
+
+{% if current_user.is_authenticated and current_user.role == 'user' %}
+    {% if record.stock_quantity > 0 %}
+    <form action="{{ url_for('add_to_cart', record_id=record.id) }}" method="post" class="d-flex align-items-center mt-3">
+    <input type="number" name="quantity" value="1" min="1" max="{{ record.stock_quantity }}" class="form-control me-2" style="width:80px;">
+    <button type="submit" class="btn btn-primary btn-lg" 
+    {% if record.stock_quantity == 0 %} disabled {% endif %}>
+    <i class="bi bi-cart-plus"></i> Добавить в корзину
+    </button>
+    </form>
+    {% else %}
+        <p class="text-danger mt-3">Нет в наличии</p>
+    {% endif %}
+{% endif %}
+
 <h3>Треклист</h3>
+{% if record.release.compositions %}
 <ul>
-{% for comp in record.release.compositions %}
-    <li>{{ comp.title }}</li>
-{% endfor %}
+    {% for comp in record.release.compositions %}
+        <li>{{ comp.title }}</li>
+    {% endfor %}
 </ul>
+{% else %}
+<p>Треклист отсутствует.</p>
+{% endif %}
 {% endblock %}

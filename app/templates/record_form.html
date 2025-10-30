@@ -1,16 +1,88 @@
 {% extends "profile_base.html" %}
+
 {% block profile_content %}
-    <h3>{{ title }}</h3>
-    <form method="POST" action="" enctype="multipart/form-data" class="form-container" style="margin: 0; box-shadow: none; padding: 0;">
-        {{ form.hidden_tag() }}
-        <p>{{ form.title.label }}<br>{{ form.title() }}</p>
-        <p>{{ form.release.label }}<br>{{ form.release(style="width: 100%; padding: 12px;") }}</p>
-        <p>{{ form.release_year.label }}<br>{{ form.release_year() }}</p>
-        <p>{{ form.price.label }}<br>{{ form.price() }}</p>
-        <p>{{ form.stock_quantity.label }}<br>{{ form.stock_quantity() }}</p>
-        <p>{{ form.record_type.label }}<br>{{ form.record_type() }}</p>
-        <p>{{ form.cover_image.label }}<br>{{ form.cover_image() }}</p>
-        <p>{{ form.description.label }}<br>{{ form.description(rows=5, style="width: 100%;") }}</p>
-        <p>{{ form.submit() }}</p>
-    </form>
+
+<h3>{{ title }}</h3>
+
+<!-- Flash-сообщения -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <ul class="flash-messages">
+            {% for category, message in messages %}
+                <li class="flash-{{ category }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endwith %}
+
+<form method="POST" enctype="multipart/form-data" class="form-container">
+    {{ form.hidden_tag() }}
+
+    <p>
+        {{ form.title.label }}<br>
+        {{ form.title(class="form-input") }}
+        {% if form.title.errors %}
+            <span class="error">{{ form.title.errors[0] }}</span>
+        {% endif %}
+    </p>
+
+    <p>
+        {{ form.release.label }}<br>
+        {{ form.release(class="form-select") }}
+        {% if form.release.errors %}
+            <span class="error">{{ form.release.errors[0] }}</span>
+        {% endif %}
+    </p>
+
+    <p>
+        {{ form.release_year.label }}<br>
+        {{ form.release_year(class="form-input") }}
+        {% if form.release_year.errors %}
+            <span class="error">{{ form.release_year.errors[0] }}</span>
+        {% endif %}
+    </p>
+
+    <p>
+        {{ form.price.label }}<br>
+        {{ form.price(class="form-input") }}
+        {% if form.price.errors %}
+            <span class="error">{{ form.price.errors[0] }}</span>
+        {% endif %}
+    </p>
+
+    <p>
+        {{ form.stock_quantity.label }}<br>
+        {{ form.stock_quantity(class="form-input") }}
+        {% if form.stock_quantity.errors %}
+            <span class="error">{{ form.stock_quantity.errors[0] }}</span>
+        {% endif %}
+    </p>
+
+    <p>
+        {{ form.record_type.label }}<br>
+        {{ form.record_type(class="form-input") }}
+        {% if form.record_type.errors %}
+            <span class="error">{{ form.record_type.errors[0] }}</span>
+        {% endif %}
+    </p>
+
+    <p>
+        {{ form.cover_image.label }}<br>
+        {{ form.cover_image() }}
+        {% if form.cover_image.errors %}
+            <span class="error">{{ form.cover_image.errors[0] }}</span>
+        {% endif %}
+    </p>
+
+    <p>
+        {{ form.description.label }}<br>
+        {{ form.description(rows=5, class="form-textarea") }}
+        {% if form.description.errors %}
+            <span class="error">{{ form.description.errors[0] }}</span>
+        {% endif %}
+    </p>
+
+    <p>{{ form.submit(class="btn-submit") }}</p>
+</form>
+
 {% endblock %}

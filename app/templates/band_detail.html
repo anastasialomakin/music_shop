@@ -1,21 +1,42 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>{{ band.name }}</h1>
+
 {% if band.cover_image_url %}
-  <img src="{{ url_for('uploaded_file', filename=band.cover_image_url) }}" alt="Обложка группы {{ band.name }}" style="max-width:200px; margin-bottom:20px;">
+  <img src="{{ url_for('uploaded_file', filename=band.cover_image_url) }}" alt="Обложка группы {{ band.name }}" style="max-width:250px; margin-bottom:20px;">
 {% endif %}
+
+{% if band.bio %}
+<p>{{ band.bio }}</p>
+{% endif %}
+
 <h3>Состав:</h3>
-<ul>{% for member in band.members %}<li>{{ member.name }}</li>{% endfor %}</ul>
+{% if band.members %}
+<ul>
+    {% for member in band.members %}
+        <li>{{ member.name }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>Состав группы не указан.</p>
+{% endif %}
+
 <hr>
 <h3>Релизы в нашем магазине:</h3>
+{% if band.releases.count() > 0 %}
 <div class="catalog-grid" style="margin-top: 20px;">
     {% for release in band.releases %}
         <div class="record-card">
             <a href="{{ url_for('release_detail', id=release.id) }}">
-                <img src="{{ url_for('uploaded_file', filename=release.cover_image_url) }}" alt="Обложка">
+                {% if release.cover_image_url %}
+                    <img src="{{ url_for('uploaded_file', filename=release.cover_image_url) }}" alt="Обложка {{ release.title }}">
+                {% endif %}
                 <h4>{{ release.title }} ({{ release.release_year }})</h4>
             </a>
         </div>
     {% endfor %}
 </div>
+{% else %}
+<p>Релизов нет.</p>
+{% endif %}
 {% endblock %}

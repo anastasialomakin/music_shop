@@ -10,12 +10,12 @@
             <a href="{{ url_for('admin_users') }}" class="{% if 'admin_user' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-people-fill"></i> Пользователи
             </a>
-            <a href="#" class="{% if 'admin_order' in request.endpoint %}active{% endif %}">
+            <a href="{{ url_for('admin_orders') }}" class="{% if 'admin_order' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-box-seam"></i> Заказы
             </a>
             <hr>
             <p style="padding: 10px 15px; color: #777; font-size: 0.9em; margin: 0;">Управление контентом</p>
-            <a href="#">
+            <a href="{{ url_for('admin_records') }}" class="{% if 'record' in request.endpoint %}active{% endif %}">
                 <i class="bi bi-disc-fill"></i> Пластинки
             </a>
             <a href="{{ url_for('admin_releases') }}" class="{% if 'release' in request.endpoint %}active{% endif %}">
