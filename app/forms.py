@@ -107,3 +107,5 @@ class ReleaseForm(FlaskForm):
     submit = SubmitField('Сохранить релиз')
 # class lab5(FlaskForm):
 #    title = StringField('randomChange', changes=[DataRequired()])
+# class lab6(FlaskForm):
+#    title = StringField('randomChange', changes=[DataRequired()])
