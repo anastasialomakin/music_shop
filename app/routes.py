@@ -262,15 +262,19 @@ def add_to_cart(record_id):
     cart = session.get('cart', {})
     record_id_str = str(record_id)
     qty_to_add = int(request.form.get('quantity', 1))
-
-    # Ошибка: не уменьшаем stock_quantity
-    # record.stock_quantity -= qty_to_add  # <-- забыли эту строку
-
+    
+    # текущий кол-во в корзине
     current_qty = cart.get(record_id_str, 0)
-    cart[record_id_str] = current_qty + qty_to_add
-    session['cart'] = cart
-
-    flash(f'{qty_to_add} шт. добавлено в корзину.', 'success')
+    
+    # нельзя добавить больше, чем есть на складе
+    if current_qty + qty_to_add > record.stock_quantity:
+        flash(f'Нельзя добавить больше {record.stock_quantity} шт. в корзину.', 'warning')
+        qty_to_add = max(0, record.stock_quantity - current_qty)
+    
+    if qty_to_add > 0:
+        cart[record_id_str] = current_qty + qty_to_add
+        session['cart'] = cart
+        flash(f'{qty_to_add} шт. добавлено в корзину.', 'success')
     return redirect(request.referrer or url_for('index'))
 
 
