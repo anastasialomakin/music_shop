@@ -25,3 +25,10 @@ def load_user(id):
 with app.app_context():
     db.create_all()
     seed_database()
+    
+def setup_database(app):
+    """Создание и наполнение базы тестовыми данными"""
+    with app.app_context():
+        db.create_all()
+        from app.seed_db import seed_database
+        seed_database()
