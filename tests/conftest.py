@@ -8,11 +8,14 @@ class TestConfig:
     WTF_CSRF_ENABLED = False
 
 @pytest.fixture
-def seeded_app(app):
-    from app.seed_db import seed_database
+def app():
+    app = create_app(TestConfig)
     with app.app_context():
-        seed_database()
-    return app
+        db.create_all()
+        yield app
+        db.session.remove()
+        db.drop_all()
+
 
 @pytest.fixture
 def client(app):
