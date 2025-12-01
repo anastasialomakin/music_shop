@@ -1,37 +1,39 @@
 from flask import Flask
-from config import Config
+from config import Config, TestConfig
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
-import os
 
 db = SQLAlchemy()
 migrate = Migrate()
 login_manager = LoginManager()
 login_manager.login_view = 'login'
 
-def create_app(config_class=Config):
+
+def create_app(config_name=None):
     app = Flask(__name__)
-    app.config.from_object(config_class)
+
+    # Конфиг выбирает pipeline
+    if config_name == "testing":
+        app.config.from_object(TestConfig)
+    else:
+        app.config.from_object(Config)
 
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
     from app import routes, models
-
-    @login_manager.user_loader
-    def load_user(id):
-        return models.User.query.get(int(id))
-
-    # ---------------------------------------
-    # Автоматическое создание БД + сид
-    # Но ТОЛЬКО если не в режиме тестов
-    # ---------------------------------------
-    if not app.config.get("TESTING", False):
-        from app.seed_db import seed_database
-        with app.app_context():
-            db.create_all()
-            seed_database()
-
     return app
+
+
+# Используется приложением
+app = create_app()
+
+
+# ✨ ЭТУ ФУНКЦИЮ ВЫЗЫВАЕТ TEAMCITY ✨
+def setup_database(app):
+    with app.app_context():
+        db.create_all()
+        from app.seed_db import seed_database
+        seed_database()
