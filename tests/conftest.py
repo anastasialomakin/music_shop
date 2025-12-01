@@ -2,14 +2,17 @@ import pytest
 from app import create_app, db
 from app.models import User
 
+class TestConfig:
+    TESTING = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    WTF_CSRF_ENABLED = False
+
 @pytest.fixture
-def app():
-    app = create_app('testing')
+def seeded_app(app):
+    from app.seed_db import seed_database
     with app.app_context():
-        db.create_all()
-        yield app
-        db.session.remove()
-        db.drop_all()
+        seed_database()
+    return app
 
 @pytest.fixture
 def client(app):
