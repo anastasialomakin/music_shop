@@ -1,7 +1,7 @@
 import os
-from app import db, app
+from app import db
 from werkzeug.utils import secure_filename
-from flask import render_template, flash, redirect, url_for, session, request, abort, send_from_directory, jsonify, current_app
+from flask import render_template, flash, redirect, url_for, session, request, abort, send_from_directory, jsonify, current_app as app
 from functools import wraps
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import Record, Release, Band, User, CustomerProfile, ManufacturerProfile, Order, OrderItem, Genre, Artist, Composition
