@@ -1,5 +1,5 @@
 import os
-from app import app, db
+from app import db, app
 from werkzeug.utils import secure_filename
 from flask import render_template, flash, redirect, url_for, session, request, abort, send_from_directory, jsonify, current_app
 from functools import wraps

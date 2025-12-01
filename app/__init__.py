@@ -13,7 +13,6 @@ login_manager.login_view = 'login'
 def create_app(config_name=None):
     app = Flask(__name__)
 
-    # Конфиг выбирает pipeline
     if config_name == "testing":
         app.config.from_object(TestConfig)
     else:
@@ -23,17 +22,25 @@ def create_app(config_name=None):
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
-    from app import routes, models
+    # импорт маршрутов делаем ПОСЛЕ создания app
+    import app.routes
+    import app.models
+
     return app
 
 
-# Используется приложением
+# Глобальный app — как у тебя раньше!
 app = create_app()
 
 
-# ✨ ЭТУ ФУНКЦИЮ ВЫЗЫВАЕТ TEAMCITY ✨
+@login_manager.user_loader
+def load_user(id):
+    from app.models import User
+    return User.query.get(int(id))
+
+
 def setup_database(app):
+    from app.seed_db import seed_database
     with app.app_context():
         db.create_all()
-        from app.seed_db import seed_database
         seed_database()
