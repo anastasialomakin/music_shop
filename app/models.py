@@ -125,8 +125,9 @@ class Order(db.Model):
     total_amount = db.Column(db.Numeric(10, 2), nullable=False)
     status = db.Column(db.String(50), nullable=False)
     payment_method = db.Column(db.String(50))
-    shipping_address = db.Column(db.Text)  # <-- вот это добавляем
-    comment = db.Column(db.Text)  # если хочешь хранить комментарий к заказу
+    shipping_address = db.Column(db.Text)
+    comment = db.Column(db.Text)
+    delivery_date = db.Column(db.DateTime) # update
     items = db.relationship('OrderItem', backref='order', lazy='dynamic', cascade="all, delete-orphan")
 
 class OrderItem(db.Model):
