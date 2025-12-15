@@ -48,6 +48,7 @@ class CustomerProfile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, unique=True)
     shipping_address = db.Column(db.Text, nullable=True)
+    phone_number = db.Column(db.String(20)) # second update
 
 class ManufacturerProfile(db.Model):
     __tablename__ = 'manufacturer_profiles'
